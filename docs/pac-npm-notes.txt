@@ -1,0 +1,34 @@
+The package is @microsoft/power-apps, and the CLI command is power-apps not powerapps.
+
+Full flow with the npm CLI
+Three commands only:
+CommandWhat it doesnpx power-apps initInitialize the code app, handles auth automaticallynpx power-apps runLocal dev servernpx power-apps pushPublish to your environment
+Step by step:
+bash# Scaffold (still uses degit for the vite template)
+npx degit github:microsoft/PowerAppsCodeApps/templates/vite my-app
+cd my-app
+
+# Install deps + the SDK/CLI
+npm install
+npm install @microsoft/power-apps
+
+# Init (interactive, handles auth for you - no separate pac auth needed)
+npx power-apps init
+
+# or direct:
+npx power-apps init --displayName "My App" --environmentId <id>
+
+# Run locally
+npx power-apps run
+
+# Build + push
+npm run build
+npx power-apps push
+Key corrections from what I said before:
+
+Auth is handled automatically by init — no separate pac auth create needed
+The command is power-apps not powerapps
+run replaces pac code run, push replaces pac code push — clean 1:1 swap
+Still only 3 prereqs: Node.js, Git, and a Power Platform environment with Code Apps enabled — no .NET, no pac CLI install required
+
+That "reduces prerequisites" claim is real — this is meaningfully lighter than the pac path.

@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  :root {
+    /* Microsoft Fluent Design palette */
+    --background: 225 20% 97%;
+    --foreground: 213 35% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 213 35% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 35% 16%;
+    --primary: 207 100% 42%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 93%;
+    --secondary-foreground: 213 35% 16%;
+    --muted: 220 14% 94%;
+    --muted-foreground: 215 13% 45%;
+    --accent: 207 90% 94%;
+    --accent-foreground: 207 100% 30%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 20% 90%;
+    --input: 214 20% 87%;
+    --ring: 207 100% 42%;
+    --radius: 0.5rem;
+
+    /* Sidebar tokens */
+    --sidebar-from: #0C2340;
+    --sidebar-to: #1B3A5C;
+  }
+
+  .dark {
+    --background: 222 20% 10%;
+    --foreground: 210 20% 90%;
+    --card: 222 20% 13%;
+    --card-foreground: 210 20% 90%;
+    --popover: 222 20% 13%;
+    --popover-foreground: 210 20% 90%;
+    --primary: 207 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 20% 18%;
+    --secondary-foreground: 210 20% 90%;
+    --muted: 215 16% 18%;
+    --muted-foreground: 215 13% 60%;
+    --accent: 207 50% 18%;
+    --accent-foreground: 207 100% 70%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 16% 22%;
+    --input: 215 16% 24%;
+    --ring: 207 100% 50%;
+
+    --sidebar-from: #50E6FF;
+    --sidebar-to: #0078D4;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", ui-monospace, monospace;
+  }
+}

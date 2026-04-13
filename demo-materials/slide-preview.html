@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Apps: Under the Hood — Slide Preview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #111118;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    color: #fff;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 60px;
+  }
+
+  .slide {
+    width: 1200px;
+    max-width: 100%;
+    background: #1e1e2e;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .accent-bar { height: 5px; width: 100%; }
+  .accent-purple { background: #742774; }
+  .accent-blue { background: #60a5fa; }
+
+  .slide-body { padding: 40px 48px 44px; }
+
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: #94a3b8;
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .col-header {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .col-header .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .bullet-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .bullet-list li {
+    font-size: 13.5px;
+    line-height: 1.6;
+    padding-left: 18px;
+    position: relative;
+  }
+
+  .bullet-list li::before {
+    content: '\2022';
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+  }
+
+  .bullet-label {
+    font-weight: 700;
+  }
+
+  .bullet-desc {
+    color: #ccc;
+  }
+
+  /* Color classes */
+  .c-red { color: #ef4444; }
+  .c-amber { color: #fbbf24; }
+  .c-blue { color: #60a5fa; }
+  .c-green { color: #10b981; }
+  .c-violet { color: #8b5cf6; }
+  .c-gray { color: #94a3b8; }
+
+  .bg-red { background: #ef4444; }
+  .bg-amber { background: #fbbf24; }
+  .bg-blue { background: #60a5fa; }
+  .bg-green { background: #10b981; }
+  .bg-violet { background: #8b5cf6; }
+  .bg-gray { background: #94a3b8; }
+
+  .slide-footer {
+    border-top: 2px solid #742774;
+    margin: 32px 0 0;
+    padding-top: 12px;
+    font-size: 12.5px;
+    color: #94a3b8;
+  }
+
+  /* Slide 5 — pattern cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .pattern-card {
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    padding: 24px 28px;
+    border-left: 4px solid;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pattern-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .pattern-card .desc {
+    font-size: 13px;
+    color: #ccc;
+    line-height: 1.65;
+  }
+
+  .pattern-card .code-hint {
+    font-family: 'Consolas', 'Fira Code', monospace;
+    font-size: 11px;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+    padding: 6px 10px;
+    border-radius: 5px;
+    margin-top: auto;
+  }
+
+  /* Slide label */
+  .slide-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #64748b;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 2 — YOUR APP LIVES INSIDE A BIGGER SYSTEM              -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="slide-label">Slide 2</div>
+<div class="slide">
+  <div class="accent-bar accent-purple"></div>
+  <div class="slide-body">
+    <h1>Your App Lives Inside a Bigger System</h1>
+    <div class="subtitle">
+      Think of it like renting space in an office building &mdash;
+      you get security, elevators, and fire alarms for free
+    </div>
+
+    <div class="columns">
+      <!-- LEFT -->
+      <div>
+        <div class="col-header c-violet">
+          <span class="dot bg-violet"></span>
+          What Happens Behind the Scenes
+        </div>
+        <ul class="bullet-list">
+          <li>
+            <span class="bullet-label c-red">Your app is treated like a Canvas App &mdash;</span>
+            <span class="bullet-desc">Even though you wrote React code, the platform classifies it the same as a drag-and-drop app</span>
+          </li>
+          <li>
+            <span class="bullet-label c-amber">It&rsquo;s nested inside multiple layers &mdash;</span>
+            <span class="bullet-desc">Like a series of picture frames: platform shell &rarr; player &rarr; runtime &rarr; your code</span>
+          </li>
+          <li>
+            <span class="bullet-label c-blue">77 scripts load before yours &mdash;</span>
+            <span class="bullet-desc">For login, security, Teams integration, Copilot AI, user surveys, and more</span>
+          </li>
+          <li>
+            <span class="bullet-label c-green">230KB of translations load every time &mdash;</span>
+            <span class="bullet-desc">Text for every language, device type, and region &mdash; most of it will never be used</span>
+          </li>
+          <li>
+            <span class="bullet-label c-gray">55 on/off switches &mdash;</span>
+            <span class="bullet-desc">Microsoft can enable or disable features for your organization remotely</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <div class="col-header c-green">
+          <span class="dot bg-green"></span>
+          What You Get Without Doing Anything
+        </div>
+        <ul class="bullet-list">
+          <li>
+            <span class="bullet-label c-green">Login is handled for you &mdash;</span>
+            <span class="bullet-desc">Users are authenticated before your app even loads &mdash; you never touch passwords or tokens</span>
+          </li>
+          <li>
+            <span class="bullet-label c-violet">Copilot AI is pre-wired &mdash;</span>
+            <span class="bullet-desc">A built-in AI assistant panel is ready to go &mdash; 185 references to it in the page code</span>
+          </li>
+          <li>
+            <span class="bullet-label c-blue">Works in government clouds automatically &mdash;</span>
+            <span class="bullet-desc">Same app code runs in US Gov, Germany, China &mdash; no changes needed</span>
+          </li>
+          <li>
+            <span class="bullet-label c-amber">Accessibility is built in &mdash;</span>
+            <span class="bullet-desc">Screen reader support, keyboard navigation, skip-to-content links, progress indicators</span>
+          </li>
+          <li>
+            <span class="bullet-label c-gray">Security headers are managed &mdash;</span>
+            <span class="bullet-desc">Content security policies and script protections are applied for you</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="slide-footer">
+      How we know: we saved the deployed app&rsquo;s HTML and read every line &mdash;
+      I&rsquo;ll show you in the demo
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 5 — COOL THINGS YOU CAN DO                             -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="slide-label">Slide 5</div>
+<div class="slide">
+  <div class="accent-bar accent-blue"></div>
+  <div class="slide-body">
+    <h1>Cool Things You Can Do</h1>
+    <div class="subtitle">
+      Standard tools that just work inside Power Platform &mdash; no special tricks needed
+    </div>
+
+    <div class="card-grid">
+      <!-- Card 1 -->
+      <div class="pattern-card" style="border-color: #60a5fa;">
+        <h3 class="c-blue">Instant Search, Zero Extra Calls</h3>
+        <div class="desc">
+          Press Ctrl+K to search all 6 data tables instantly.
+          It reads data already loaded in memory &mdash; no extra database trips.
+        </div>
+        <div class="code-hint">Searches accounts, contacts, action items, ideas, meetings, projects</div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="pattern-card" style="border-color: #fbbf24;">
+        <h3 class="c-amber">Quick-Create Buttons (27 lines of code)</h3>
+        <div class="desc">
+          Colored buttons at the top of every page.
+          Tap one and the right form opens, pre-filled with the right type. That&rsquo;s it.
+        </div>
+        <div class="code-hint">Tap "work" &rarr; action item form opens with type = Work</div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="pattern-card" style="border-color: #10b981;">
+        <h3 class="c-green">Drag-and-Drop That Saves Automatically</h3>
+        <div class="desc">
+          Drag a card on the Kanban board to a new column
+          and the database updates instantly. No save button needed.
+        </div>
+        <div class="code-hint">Drag to parking lot &rarr; item is flagged as pinned in Dataverse</div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="pattern-card" style="border-color: #8b5cf6;">
+        <h3 class="c-violet">Dark Mode That Works Inside the Platform</h3>
+        <div class="desc">
+          One click toggles dark mode. This needed a specific approach
+          because the platform controls the outer page styling.
+        </div>
+        <div class="code-hint">Class-based toggle &mdash; media queries don&rsquo;t work inside the iframe</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

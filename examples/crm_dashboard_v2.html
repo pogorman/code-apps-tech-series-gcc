@@ -1,0 +1,252 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.dash { padding: 20px; font-family: var(--font-sans); }
+.kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 16px 20px; position: relative; overflow: hidden; }
+.kpi-label { font-size: 11px; color: var(--color-text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+.kpi-val { font-size: 28px; font-weight: 500; color: var(--color-text-primary); line-height: 1; }
+.kpi-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+.kpi-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; }
+.chart-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; margin-bottom: 14px; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 18px 20px; min-width: 0; overflow: hidden; }
+.card-title { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
+.chip { font-size: 11px; padding: 4px 10px; border-radius: 99px; border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); cursor: pointer; transition: all .15s; }
+.chip.active { background: var(--color-background-info); color: var(--color-text-info); border-color: var(--color-border-info); }
+.status-row { padding: 8px 10px; border-radius: 8px; border: 0.5px solid var(--color-border-tertiary); margin-bottom: 8px; }
+.priority-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
+.priority-label { min-width: 80px; color: var(--color-text-secondary); }
+.priority-bar-bg { flex: 1; height: 20px; background: var(--color-background-secondary); border-radius: 4px; overflow: hidden; }
+.priority-bar-fill { height: 100%; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 500; border-radius: 4px; min-width: 24px; transition: width .4s cubic-bezier(.4,0,.2,1); }
+.account-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 12px; }
+.account-name { color: var(--color-text-secondary); flex: 0 0 190px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.account-bar-bg { flex: 1; height: 6px; background: var(--color-background-secondary); border-radius: 3px; overflow: hidden; min-width: 0; }
+.account-bar-fill { height: 100%; border-radius: 3px; transition: width .4s cubic-bezier(.4,0,.2,1); }
+.account-count { color: var(--color-text-tertiary); font-size: 11px; min-width: 16px; text-align: right; }
+</style>
+
+<div class="dash">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;">
+    <div>
+      <div style="font-size:18px;font-weight:500;color:var(--color-text-primary)">Action Items</div>
+      <div style="font-size:12px;color:var(--color-text-tertiary);margin-top:2px">Insights at a glance</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="chip active" onclick="setFilter('all',this)">All</button>
+      <button class="chip" onclick="setFilter('work',this)">Work</button>
+      <button class="chip" onclick="setFilter('personal',this)">Personal</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Total items</div>
+      <div class="kpi-val" id="kTotal">11</div>
+      <div class="kpi-sub" id="kTotalSub">across all accounts</div>
+      <div class="kpi-accent" style="background:#378ADD"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Completion rate</div>
+      <div class="kpi-val" id="kRate">9%</div>
+      <div class="kpi-sub" id="kRateSub">1 of 11 complete</div>
+      <div class="kpi-accent" style="background:#1D9E75"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">In progress</div>
+      <div class="kpi-val" id="kProg">2</div>
+      <div class="kpi-sub">actively being worked</div>
+      <div class="kpi-accent" style="background:#EF9F27"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">High / top priority</div>
+      <div class="kpi-val" id="kPriority">5</div>
+      <div class="kpi-sub">need attention</div>
+      <div class="kpi-accent" style="background:#E24B4A"></div>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <!-- Status breakdown: donut + side list, all contained -->
+    <div class="card">
+      <div class="card-title">Status breakdown</div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <!-- Donut: fixed size, no overflow -->
+        <div style="position:relative;width:120px;height:120px;flex-shrink:0;">
+          <canvas id="donutChart" width="120" height="120" style="display:block;width:120px;height:120px;"></canvas>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+            <div id="donut-center-val" style="font-size:20px;font-weight:500;color:var(--color-text-primary);line-height:1;">11</div>
+            <div style="font-size:10px;color:var(--color-text-tertiary);">total</div>
+          </div>
+        </div>
+        <!-- Status rows -->
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;">
+          <div class="status-row">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:12px;color:var(--color-text-secondary);display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#888780;"></span>Recognized</span>
+              <span style="font-size:12px;font-weight:500;color:var(--color-text-primary);" id="s0">6</span>
+            </div>
+            <div style="height:3px;background:var(--color-background-secondary);border-radius:2px;"><div id="sb0" style="height:100%;width:55%;background:#888780;border-radius:2px;transition:width .4s;"></div></div>
+          </div>
+          <div class="status-row">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:12px;color:var(--color-text-secondary);display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#378ADD;"></span>In progress</span>
+              <span style="font-size:12px;font-weight:500;color:var(--color-text-primary);" id="s1">2</span>
+            </div>
+            <div style="height:3px;background:var(--color-background-secondary);border-radius:2px;"><div id="sb1" style="height:100%;width:18%;background:#378ADD;border-radius:2px;transition:width .4s;"></div></div>
+          </div>
+          <div class="status-row">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:12px;color:var(--color-text-secondary);display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#EF9F27;"></span>Pending comms</span>
+              <span style="font-size:12px;font-weight:500;color:var(--color-text-primary);" id="s2">2</span>
+            </div>
+            <div style="height:3px;background:var(--color-background-secondary);border-radius:2px;"><div id="sb2" style="height:100%;width:18%;background:#EF9F27;border-radius:2px;transition:width .4s;"></div></div>
+          </div>
+          <div class="status-row">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:12px;color:var(--color-text-secondary);display:flex;align-items:center;gap:5px;"><span class="legend-dot" style="background:#1D9E75;"></span>Complete</span>
+              <span style="font-size:12px;font-weight:500;color:var(--color-text-primary);" id="s3">1</span>
+            </div>
+            <div style="height:3px;background:var(--color-background-secondary);border-radius:2px;"><div id="sb3" style="height:100%;width:9%;background:#1D9E75;border-radius:2px;transition:width .4s;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Priority distribution -->
+    <div class="card">
+      <div class="card-title">Priority distribution</div>
+      <div>
+        <div class="priority-row">
+          <div class="priority-label">Top priority</div>
+          <div class="priority-bar-bg"><div class="priority-bar-fill" id="pb-top" style="width:80%;background:#E24B4A;color:#fff;">4</div></div>
+        </div>
+        <div class="priority-row">
+          <div class="priority-label">High</div>
+          <div class="priority-bar-bg"><div class="priority-bar-fill" id="pb-high" style="width:20%;background:#EF9F27;color:#fff;">1</div></div>
+        </div>
+        <div class="priority-row">
+          <div class="priority-label">Medium</div>
+          <div class="priority-bar-bg"><div class="priority-bar-fill" id="pb-med" style="width:40%;background:#378ADD;color:#fff;">2</div></div>
+        </div>
+        <div class="priority-row">
+          <div class="priority-label">Low</div>
+          <div class="priority-bar-bg"><div class="priority-bar-fill" id="pb-low" style="width:80%;background:#888780;color:#fff;">4</div></div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:0.5px solid var(--color-border-tertiary);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;color:var(--color-text-tertiary);">High + top priority</span>
+        <span id="hi-count" style="font-size:15px;font-weight:500;color:#E24B4A;">5</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Items by account</div>
+    <div id="account-list"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const DATA = {
+  all: {
+    status: [6,2,2,1],
+    priority: { top:4, high:1, med:2, low:4 },
+    accounts: [
+      { name:'NC Div. of Adult Correction', items:4, color:'#378ADD' },
+      { name:'SC Dept. of Public Health', items:3, color:'#1D9E75' },
+      { name:'Philadelphia Police Dept.', items:2, color:'#EF9F27' },
+      { name:'Other', items:2, color:'#888780' },
+    ]
+  },
+  work: {
+    status: [4,2,1,0],
+    priority: { top:3, high:1, med:2, low:1 },
+    accounts: [
+      { name:'NC Div. of Adult Correction', items:4, color:'#378ADD' },
+      { name:'Philadelphia Police Dept.', items:2, color:'#EF9F27' },
+      { name:'SC Dept. of Public Health', items:1, color:'#1D9E75' },
+    ]
+  },
+  personal: {
+    status: [2,0,1,1],
+    priority: { top:1, high:0, med:0, low:3 },
+    accounts: [
+      { name:'Other', items:2, color:'#888780' },
+      { name:'SC Dept. of Public Health', items:2, color:'#1D9E75' },
+    ]
+  }
+};
+
+const STATUS_COLORS = ['#888780','#378ADD','#EF9F27','#1D9E75'];
+let donutChart;
+
+function initDonut(data) {
+  const ctx = document.getElementById('donutChart');
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { datasets: [{ data: data.status, backgroundColor: STATUS_COLORS, borderWidth: 0, hoverOffset: 3 }] },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      animation: { duration: 400 }
+    }
+  });
+}
+
+function renderAccounts(data) {
+  const max = Math.max(...data.accounts.map(a => a.items));
+  document.getElementById('account-list').innerHTML = data.accounts.map(a => `
+    <div class="account-row">
+      <div class="account-name">${a.name}</div>
+      <div class="account-bar-bg"><div class="account-bar-fill" style="width:${Math.round(a.items/max*100)}%;background:${a.color};"></div></div>
+      <div class="account-count">${a.items}</div>
+    </div>
+  `).join('');
+}
+
+function updateUI(filter) {
+  const d = DATA[filter];
+  const total = d.status.reduce((a,b)=>a+b,0);
+  const complete = d.status[3];
+  const inProg = d.status[1];
+  const hiPri = d.priority.top + d.priority.high;
+  const rate = total > 0 ? Math.round(complete/total*100) : 0;
+
+  document.getElementById('kTotal').textContent = total;
+  document.getElementById('kRate').textContent = rate + '%';
+  document.getElementById('kRateSub').textContent = `${complete} of ${total} complete`;
+  document.getElementById('kProg').textContent = inProg;
+  document.getElementById('kPriority').textContent = hiPri;
+  document.getElementById('hi-count').textContent = hiPri;
+  document.getElementById('donut-center-val').textContent = total;
+
+  ['s0','s1','s2','s3'].forEach((id,i) => { document.getElementById(id).textContent = d.status[i]; });
+  ['sb0','sb1','sb2','sb3'].forEach((id,i) => {
+    document.getElementById(id).style.width = total > 0 ? Math.round(d.status[i]/total*100)+'%' : '0%';
+  });
+
+  const pmax = Math.max(d.priority.top, d.priority.high, d.priority.med, d.priority.low, 1);
+  [['pb-top',d.priority.top,'#E24B4A'],['pb-high',d.priority.high,'#EF9F27'],['pb-med',d.priority.med,'#378ADD'],['pb-low',d.priority.low,'#888780']].forEach(([id,val,col]) => {
+    const el = document.getElementById(id);
+    el.style.width = Math.round(val/pmax*100)+'%';
+    el.style.background = col;
+    el.textContent = val;
+  });
+
+  initDonut(d);
+  renderAccounts(d);
+}
+
+function setFilter(f, el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  updateUI(f);
+}
+
+updateUI('all');
+</script>

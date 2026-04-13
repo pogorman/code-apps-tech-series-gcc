@@ -1,0 +1,50 @@
+{
+  "appId": "b66395f5-3497-4ee0-95ff-ea6f22028478",
+  "appDisplayName": "My Work Code App (GCC)",
+  "description": "Code-first Power App for the tech series - GCC deployment",
+  "environmentId": "efacb6cc-fa92-e0d7-b073-e02733c4b337",
+  "buildPath": "dist",
+  "buildEntryPoint": "index.html",
+  "logoPath": "Default",
+  "localAppUrl": "http://localhost:3001/",
+  "region": "gccmoderate",
+  "connectionReferences": {},
+  "databaseReferences": {
+    "default.cds": {
+      "databaseDetails": null,
+      "dataSources": {
+        "accounts": {
+          "entitySetName": "accounts",
+          "logicalName": "account",
+          "isHidden": false
+        },
+        "contacts": {
+          "entitySetName": "contacts",
+          "logicalName": "contact"
+        },
+        "actionitems": {
+          "entitySetName": "tdvsp_actionitems",
+          "logicalName": "tdvsp_actionitem"
+        },
+        "hvas": {
+          "entitySetName": "tdvsp_hvas",
+          "logicalName": "tdvsp_hva"
+        },
+        "meetingsummaries": {
+          "entitySetName": "tdvsp_meetingsummaries",
+          "logicalName": "tdvsp_meetingsummary"
+        },
+        "ideas": {
+          "entitySetName": "tdvsp_ideas",
+          "logicalName": "tdvsp_idea"
+        },
+        "projects": {
+          "entitySetName": "tdvsp_projects",
+          "logicalName": "tdvsp_project"
+        }
+      },
+      "actions": null
+    }
+  },
+  "version": "1.0"
+}
