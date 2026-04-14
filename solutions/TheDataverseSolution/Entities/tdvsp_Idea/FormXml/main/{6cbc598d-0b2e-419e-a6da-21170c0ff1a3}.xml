@@ -1,0 +1,203 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{6cbc598d-0b2e-419e-a6da-21170c0ff1a3}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form headerdensity="HighWithControls">
+      <tabs>
+        <tab verticallayout="true" id="{d3963519-95c3-4a94-a2c4-c1409a8e414e}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{feb8551d-e8c7-48cb-aa62-940ad90839aa}" columns="11">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{bb98583d-99a0-4a62-b2c8-d06461ee74d9}">
+                        <labels>
+                          <label description="Name" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="tdvsp_name" />
+                      </cell>
+                      <cell locklevel="0" id="{42168ab0-7603-4711-913c-c7cf6adb903d}" rowspan="15" colspan="1">
+                        <labels>
+                          <label description="Note Text" languagecode="1033" />
+                        </labels>
+                        <control id="notescontrol" classid="{06375649-C143-495E-A496-C962E5B4488E}" disabled="false" />
+                      </cell>
+                    </row>
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row>
+                      <cell id="{69c3771f-420f-4d1e-9e60-552a9bc17268}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Category" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_category" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="tdvsp_category" disabled="false" />
+                      </cell>
+                      <cell locklevel="0" id="{8b5e110b-5868-4cc1-b258-83371fd7c8b2}">
+                        <labels>
+                          <label description="" languagecode="1033" />
+                        </labels>
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{2735bd3a-f957-4e6a-b39f-4b91f6c53e0b}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Priority" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_priority" classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}" datafieldname="tdvsp_priority" disabled="false" />
+                      </cell>
+                      <cell locklevel="0" id="{1c2154dd-1319-4d3d-8c52-12daa0bde793}">
+                        <labels>
+                          <label description="" languagecode="1033" />
+                        </labels>
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{b05d6fc2-f4f4-461e-8e3f-20310ba7c163}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Description" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_description" classid="{E0DECE4B-6FC8-4A8F-A065-082708572369}" datafieldname="tdvsp_description" disabled="false" />
+                      </cell>
+                      <cell locklevel="0" id="{3cec7d83-1d56-4f16-a3b1-bfc3ae93cd6e}">
+                        <labels>
+                          <label description="" languagecode="1033" />
+                        </labels>
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{e109b20a-e782-45cf-b906-87998fc2fa9a}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Account" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_account" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="tdvsp_account" disabled="false" />
+                      </cell>
+                      <cell locklevel="0" id="{7f86b823-0133-450d-a87f-1b2a03c826df}">
+                        <labels>
+                          <label description="" languagecode="1033" />
+                        </labels>
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{4c8d0451-f232-41ee-a153-bd4e24738e1e}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Project" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_project" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="tdvsp_project" disabled="false" />
+                      </cell>
+                      <cell locklevel="0" id="{0d21ff5e-8d7a-4bdb-81cf-92c46278a63f}">
+                        <labels>
+                          <label description="" languagecode="1033" />
+                        </labels>
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{fb507e27-6dc8-4de8-94a9-d39cae59ba9e}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Contact" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_contact" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="tdvsp_contact" disabled="false" />
+                      </cell>
+                      <cell locklevel="0" id="{65a44588-defb-4a28-bb26-2a369c30f6b1}">
+                        <labels>
+                          <label description="" languagecode="1033" />
+                        </labels>
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{af9d5560-c45d-4710-b6c9-1807c4dd2d2f}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                      <cell locklevel="0" id="{c1b7201e-9f02-4df1-8afc-c0a678da475a}">
+                        <labels>
+                          <label description="" languagecode="1033" />
+                        </labels>
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <header id="{4043c1b3-e8b3-4430-86c7-916b3c392827}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{fd4823eb-30aa-41bc-9c98-7aaa82d12b45}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{f911511b-8501-4f3f-ba12-69d5759d019c}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{245fa754-0a25-4bcf-b361-64aa7f3dc567}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </header>
+      <footer id="{44a872c8-78aa-4a1d-bcb3-0a2c10e52686}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{ba8cbecd-9827-409c-aced-e1937314c99b}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{2759cc88-1863-4fce-afc0-9bd2f51d1873}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{ef0f06d3-e8b8-4e95-b9ac-f3103c08cbf9}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </footer>
+      <DisplayConditions Order="0" FallbackForm="true">
+        <Everyone />
+      </DisplayConditions>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

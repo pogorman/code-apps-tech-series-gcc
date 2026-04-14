@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{f22778e7-c1e4-4ffe-9b94-fb958001fe76}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="tdvsp_name" select="1" icon="1" preview="1">
+        <row name="result" id="tdvsp_ideaid">
+          <cell name="tdvsp_name" width="300" />
+          <cell name="tdvsp_description" width="300" />
+          <cell name="tdvsp_category" width="100" />
+          <cell name="tdvsp_priority" width="100" />
+          <cell name="tdvsp_account" width="273" />
+          <cell name="tdvsp_project" width="292" />
+          <cell name="tdvsp_contact" width="244" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="tdvsp_idea">
+          <attribute name="tdvsp_ideaid" />
+          <attribute name="tdvsp_name" />
+          <order attribute="tdvsp_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="tdvsp_category" />
+          <attribute name="tdvsp_description" />
+          <attribute name="tdvsp_account" />
+          <attribute name="tdvsp_contact" />
+          <attribute name="tdvsp_project" />
+          <attribute name="tdvsp_priority" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Ideas" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

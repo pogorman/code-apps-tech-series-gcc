@@ -1,0 +1,87 @@
+{
+  "solution": "TheDataverseSolution",
+  "language_code": 1033,
+  "tables": {
+    "account": {
+      "display_name": "Account",
+      "description": "Customer / company records used by the My Work Code App task & project management demo. Every tdvsp_project, tdvsp_actionitem, tdvsp_hva, tdvsp_meetingsummary, tdvsp_idea and tdvsp_impact rolls up to an account. When a user mentions 'customer', 'company', 'client', or 'organization', resolve it to this table. Primary display field: name. Use to list customers, look up a customer by name, or find all work tied to a specific customer via reverse lookups on _tdvsp_account_value / _tdvsp_customer_value.",
+      "columns": {}
+    },
+    "contact": {
+      "display_name": "Contact",
+      "description": "People (champions, decision makers, submitters) associated with a customer account in the My Work Code App. Linked to their company via parentcustomerid (account). Ideas (tdvsp_idea) can optionally reference a specific contact as the submitter. Use to answer 'who' questions at a customer — e.g., 'who is the contact at Contoso', 'find Patrick by email', 'list all contacts for account X'.",
+      "columns": {}
+    },
+    "tdvsp_actionitem": {
+      "display_name": "Action Item",
+      "description": "Discrete tasks / to-dos tracked by the My Work Code App. Each action item belongs to one customer (account), has a priority, a task status (Recognized -> In Progress -> Pending Comms -> On Hold -> Wrapping Up -> Complete), and a task type (Work / Personal / Learning). Drives the dashboard KPI cards and Kanban board. Use this table for anything phrased as a 'task', 'to-do', 'action', 'follow-up', 'work item', or 'next step'. Create a record to log a new task; update tdvsp_taskstatus to advance it through the workflow. Pinned action items (tdvsp_pinned = true) surface on the dashboard.",
+      "columns": {
+        "tdvsp_name": "Short title of the action item / task. Primary display field shown in lists, the Kanban board, and dashboard cards. Required, free text.",
+        "tdvsp_description": "Long-form details of the task — context, steps, acceptance criteria, links. Displayed in the detail dialog.",
+        "tdvsp_date": "Due date (or scheduled date) for the task. Used for sorting and for 'due today / this week' filters.",
+        "tdvsp_customer": "Lookup to the account (customer) this task is for. Every task is scoped to exactly one customer. Filter tasks by account using _tdvsp_customer_value.",
+        "tdvsp_priority": "Priority choice. Values: 468510002 = Top Priority, 468510003 = High, 468510001 = Medium, 468510000 = Low. Drives color coding in the UI.",
+        "tdvsp_taskstatus": "Workflow state of the task. Values: 468510000 = Recognized, 468510001 = In Progress, 468510002 = Pending Comms, 468510003 = On Hold, 468510004 = Wrapping Up, 468510005 = Complete. Drives the Kanban board columns and the dashboard donut chart.",
+        "tdvsp_tasktype": "Category of work. Values: 468510000 = Personal, 468510001 = Work, 468510002 = Learning. Drives the task-type pie chart and filter pills on the dashboard.",
+        "tdvsp_pinned": "True when the user has pinned this action item to the dashboard so it stays visible. Defaults to false."
+      }
+    },
+    "tdvsp_hva": {
+      "display_name": "HVA",
+      "description": "High Value Activity — strategic customer touchpoints worth tracking individually (executive briefings, workshops, proofs-of-concept, architecture reviews, strategic check-ins). Each HVA is scoped to one customer account and has a date, name, and description. Use this table when a user says 'HVA', 'high value activity', 'strategic engagement', or 'key touchpoint'. Distinct from tdvsp_impact (outcomes) and tdvsp_actionitem (tasks).",
+      "columns": {
+        "tdvsp_name": "Short title of the high value activity (e.g., 'Q2 Executive Briefing', 'Adoption Workshop'). Primary display field.",
+        "tdvsp_description": "Multi-line notes on the activity — agenda, attendees, outcomes, follow-ups.",
+        "tdvsp_date": "Date the HVA was performed or is scheduled.",
+        "tdvsp_customer": "Lookup to the account (customer) the HVA was performed with. Every HVA is scoped to exactly one customer."
+      }
+    },
+    "tdvsp_idea": {
+      "display_name": "Idea",
+      "description": "Innovation backlog / idea board for the My Work Code App. Captures feature requests, product suggestions, or improvement proposals categorized by Power Platform product area (Copilot Studio, Canvas Apps, Model-Driven Apps, Power Automate, Power Pages, Azure, AI, General, Other). Ideas can optionally link to a customer account, a contact (the submitter), and/or a project. Use when a user asks about 'ideas', 'suggestions', 'feature requests', 'innovations', 'proposals', or 'the idea backlog'. Supports priority ranking and dashboard pinning.",
+      "columns": {
+        "tdvsp_name": "Short title of the idea (e.g., 'Add AI extraction to meeting summaries'). Required, free text.",
+        "tdvsp_description": "Full proposal / pitch for the idea — the 'why' and the 'what'. Multi-line text.",
+        "tdvsp_category": "Power Platform product area the idea applies to. Values: 468510000 = Copilot Studio, 468510001 = Canvas Apps, 468510002 = Model-Driven Apps, 468510003 = Power Automate, 468510004 = Power Pages, 468510005 = Azure, 468510006 = AI General, 468510007 = App General, 468510008 = Other.",
+        "tdvsp_priority": "Priority of the idea. Values: 468510002 = Top Priority, 468510003 = High, 468510001 = Medium, 468510000 = Low.",
+        "tdvsp_account": "Optional lookup to the customer account the idea originated from or applies to.",
+        "tdvsp_contact": "Optional lookup to the contact (person) who submitted or championed the idea.",
+        "tdvsp_project": "Optional lookup to a tdvsp_project this idea is associated with.",
+        "tdvsp_pinned": "True when the user has pinned this idea to the dashboard so it stays visible."
+      }
+    },
+    "tdvsp_impact": {
+      "display_name": "Impact",
+      "description": "Customer Impact records — documented business outcomes, wins, or value delivered to a customer. Each impact is tied to one customer account with a name, date, and narrative description. Use for questions about 'impact', 'wins', 'outcomes', 'customer success stories', 'value delivered', or 'proof points'. Distinct from tdvsp_hva (activities performed) — impacts describe the *result*, HVAs describe the *activity*.",
+      "columns": {
+        "tdvsp_name": "Short title of the customer impact (e.g., 'Reduced month-end close by 3 days'). Required.",
+        "tdvsp_description": "Narrative detail of what was delivered, the business result, and supporting metrics or quotes.",
+        "tdvsp_date": "Date the impact was realized or documented.",
+        "tdvsp_customer": "Lookup to the account (customer) that received the impact."
+      }
+    },
+    "tdvsp_meetingsummary": {
+      "display_name": "Meeting Summary",
+      "description": "Meeting notes and summaries captured in the My Work Code App. Each summary ties to a customer account and optionally to a project, with a meeting date, a subject (tdvsp_name), and a long-form notes field (tdvsp_summary). The app supports an AI-powered 'Extract Action Items' feature that parses the summary text and auto-creates related tdvsp_actionitem records. Use when a user asks about 'meeting notes', 'call notes', 'meeting summary', 'meeting recap', 'minutes', or 'what was discussed'. Pinned summaries surface on the dashboard.",
+      "columns": {
+        "tdvsp_name": "Meeting subject / title — what the meeting was about. Required, free text.",
+        "tdvsp_summary": "Full notes, decisions, and discussion points from the meeting. Long text field. Can be parsed by the app's 'Extract Action Items' AI feature to auto-create tdvsp_actionitem records.",
+        "tdvsp_date": "Date the meeting occurred.",
+        "tdvsp_account": "Lookup to the customer account the meeting was held with.",
+        "tdvsp_project": "Optional lookup to a tdvsp_project the meeting relates to.",
+        "tdvsp_pinned": "True when the user has pinned this summary to the dashboard so it stays visible."
+      }
+    },
+    "tdvsp_project": {
+      "display_name": "Project",
+      "description": "Strategic initiatives or projects owned by a customer account in the My Work Code App. Each project belongs to a single account, has a name, description, and priority (Top Priority / High / Medium / Low). Ideas (tdvsp_idea) and meeting summaries (tdvsp_meetingsummary) can optionally reference a project. Use for questions about 'projects', 'initiatives', 'workstreams', 'deliverables', or 'strategic efforts' at a customer. Pinned projects surface on the dashboard.",
+      "columns": {
+        "tdvsp_name": "Project name / title. Required. Displayed in lists, detail views, and as a dropdown lookup from ideas and meeting summaries.",
+        "tdvsp_description": "Multi-line project charter — goals, scope, and expected outcomes.",
+        "tdvsp_priority": "Project priority. Values: 468510002 = Top Priority, 468510003 = High, 468510001 = Medium, 468510000 = Low.",
+        "tdvsp_account": "Lookup to the customer account that owns this project. Required — every project belongs to exactly one account.",
+        "tdvsp_pinned": "True when the user has pinned this project to the dashboard so it stays visible."
+      }
+    }
+  }
+}

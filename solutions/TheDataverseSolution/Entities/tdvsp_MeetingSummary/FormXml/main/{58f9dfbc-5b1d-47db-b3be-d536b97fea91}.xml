@@ -1,0 +1,143 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<forms xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <systemform>
+    <formid>{58f9dfbc-5b1d-47db-b3be-d536b97fea91}</formid>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <FormPresentation>1</FormPresentation>
+    <FormActivationState>1</FormActivationState>
+    <form headerdensity="HighWithControls">
+      <tabs>
+        <tab verticallayout="true" id="{bb50d47c-8711-4310-a6da-ed48ba904446}" IsUserDefined="1">
+          <labels>
+            <label description="General" languagecode="1033" />
+          </labels>
+          <columns>
+            <column width="100%">
+              <sections>
+                <section showlabel="false" showbar="false" IsUserDefined="0" id="{56db42cb-93dc-402f-bded-c34c1d2e6e94}">
+                  <labels>
+                    <label description="General" languagecode="1033" />
+                  </labels>
+                  <rows>
+                    <row>
+                      <cell id="{9924a13a-7f0f-4bfb-871d-77730d0bf8d2}">
+                        <labels>
+                          <label description="Name" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_name" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="tdvsp_name" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{b7691b06-45bd-44b0-8c9f-8d5da4e8c2a5}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Date" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_date" classid="{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}" datafieldname="tdvsp_date" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{d3b846a1-bd3c-47e6-a3ad-23d056627341}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Account" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_account" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="tdvsp_account" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{25d4eeb2-5a8c-4c8b-b9e7-c153a2ed2f27}" locklevel="0" colspan="1" rowspan="1">
+                        <labels>
+                          <label description="Project" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_project" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="tdvsp_project" disabled="false" />
+                      </cell>
+                    </row>
+                    <row>
+                      <cell id="{1e664e0f-c760-4759-9122-7781921adb61}" locklevel="0" colspan="1" rowspan="12">
+                        <labels>
+                          <label description="Summary" languagecode="1033" />
+                        </labels>
+                        <control id="tdvsp_summary" classid="{E0DECE4B-6FC8-4A8F-A065-082708572369}" datafieldname="tdvsp_summary" disabled="false" />
+                      </cell>
+                    </row>
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row />
+                    <row>
+                      <cell id="{90453dfe-4da5-48fe-8fb3-0c814f2fe584}">
+                        <labels>
+                          <label description="Owner" languagecode="1033" />
+                        </labels>
+                        <control id="ownerid" classid="{270BD3DB-D9AF-4782-9025-509E298DEC0A}" datafieldname="ownerid" />
+                      </cell>
+                    </row>
+                  </rows>
+                </section>
+              </sections>
+            </column>
+          </columns>
+        </tab>
+      </tabs>
+      <header id="{6a7398f3-de34-4332-891d-6b33372b288d}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{71aa8600-02fd-4c04-a099-841fdbaafc62}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{06ff0741-0e1e-4ff5-9336-b0d2b69da10d}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{ebf7bc00-bf24-4ec9-b63a-5e065dc24198}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </header>
+      <footer id="{532d0439-da1b-4742-9719-a3c2c562f698}" celllabelposition="Top" columns="111" labelwidth="115" celllabelalignment="Left">
+        <rows>
+          <row>
+            <cell id="{3edd9911-2e4a-42c8-9027-a5cf52a772fa}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{7b16953b-dd29-48b5-a3cf-9b1f54d9b29b}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+            <cell id="{4f50bcd2-b13b-48a2-9179-5ea84740876b}" showlabel="false">
+              <labels>
+                <label description="" languagecode="1033" />
+              </labels>
+            </cell>
+          </row>
+        </rows>
+      </footer>
+      <DisplayConditions Order="0" FallbackForm="true">
+        <Everyone />
+      </DisplayConditions>
+    </form>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>1</CanBeDeleted>
+    <LocalizedNames>
+      <LocalizedName description="Information" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="A form for this entity." languagecode="1033" />
+    </Descriptions>
+  </systemform>
+</forms>

@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{9b642870-15cf-4426-8369-d48ea2045048}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="tdvsp_name" select="1" icon="1" preview="1">
+        <row name="result" id="tdvsp_actionitemid">
+          <cell name="tdvsp_date" width="100" />
+          <cell name="tdvsp_name" width="300" />
+          <cell name="tdvsp_tasktype" width="100" />
+          <cell name="tdvsp_taskstatus" width="199" />
+          <cell name="tdvsp_priority" width="197" />
+          <cell name="tdvsp_customer" width="283" />
+          <cell name="tdvsp_description" width="300" />
+          <cell name="createdon" width="125" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="tdvsp_actionitem">
+          <attribute name="tdvsp_actionitemid" />
+          <attribute name="tdvsp_name" />
+          <attribute name="createdon" />
+          <order attribute="tdvsp_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="tdvsp_description" />
+          <attribute name="tdvsp_date" />
+          <attribute name="tdvsp_customer" />
+          <attribute name="tdvsp_taskstatus" />
+          <attribute name="tdvsp_priority" />
+          <attribute name="tdvsp_tasktype" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Action Items" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>

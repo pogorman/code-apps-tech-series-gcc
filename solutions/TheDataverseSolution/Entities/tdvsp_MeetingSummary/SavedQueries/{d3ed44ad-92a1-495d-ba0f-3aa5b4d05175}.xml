@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{d3ed44ad-92a1-495d-ba0f-3aa5b4d05175}</savedqueryid>
+    <layoutxml>
+      <grid name="resultset" jump="tdvsp_name" select="1" icon="1" preview="1">
+        <row name="result" id="tdvsp_meetingsummaryid">
+          <cell name="tdvsp_date" width="100" />
+          <cell name="tdvsp_name" width="300" />
+          <cell name="tdvsp_summary" width="300" />
+          <cell name="tdvsp_account" width="247" />
+          <cell name="tdvsp_project" width="293" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>0</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="tdvsp_meetingsummary">
+          <attribute name="tdvsp_meetingsummaryid" />
+          <attribute name="tdvsp_name" />
+          <order attribute="tdvsp_name" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+          <attribute name="tdvsp_date" />
+          <attribute name="tdvsp_summary" />
+          <attribute name="tdvsp_account" />
+          <attribute name="tdvsp_project" />
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Active Meeting Summaries" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>
