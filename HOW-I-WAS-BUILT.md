@@ -560,3 +560,50 @@ All changes in `src/components/layout/app-layout.tsx`.
 
 1. Created `docs/slide-outline.md` — 14-slide outline covering: app spectrum comparison (Canvas vs Model-Driven vs Code Apps), what/why/when for SLED, the stack, environment setup, AI-assisted development, deploy & govern, live demo transition, recap, resources
 2. Created `docs/live-demo-script.md` — 8-act live demo script (~30 min) with exact click/type/narrate instructions, pre-demo checklist, and recovery plays for common issues (Dataverse latency, create failures, Canvas vs Code Apps questions, licensing)
+
+## Phase 24 — Dashboard & Board Modernization (Glassmorphism, Recharts, Framer Motion)
+
+**Prompt:** "Modernize the dashboard and my board UI's with these three improvements: 1. Apply glassmorphism styling where it makes sense. 2. Replace the priority distribution bars with animated Recharts bars with tooltips. 3. Add Framer Motion entrance animations to the dashboard cards and kanban cards. Install any required packages. Keep animations subtle."
+
+**Why:** The dashboard and board were built with hand-rolled CSS — a `dashRise` keyframe, a bespoke `HBar` row for the priority distribution, and plain `bg-card` surfaces. The stagger-in effect was decent for a demo but plateaued as soon as the app grew past five cards per row: no tooltip on the priority bars (you had to hover the wrapper to see the Tip preview, not the bar itself), no proper chart legend on click-through, and the "modern" glass feel only existed on the column headers. The modernization pass swaps in the industry-standard libraries so the vibe matches the rest of a 2026-era SLED demo.
+
+**What happened:**
+
+1. **Installed `framer-motion@12.23.12` and `recharts@2.15.4`** (exact-pinned per the project rules). `npm install --save-exact` — clean, no peer-dep conflicts with React 19.
+
+2. **Dashboard (`src/components/dashboard/dashboard.tsx`):**
+   - Added shared motion tokens at the top of the file — `MOTION_RISE` (`opacity 0→1, y 14→0`), `MOTION_TRANSITION` (450ms, `cubic-bezier(0.16, 1, 0.3, 1)`), and a `GLASS_CARD` class token: a light-to-dark gradient of `white/75→white/35` (or `white/[0.06]→white/[0.01]` in dark mode) over `backdrop-blur-xl`, with a `white/50` border and a two-layer shadow (inset highlight + outer lift).
+   - Deleted the `ANIM_CSS` keyframe block and the inline `<style>{ANIM_CSS}</style>` tag. The page header, all four KPI cards, and all four chart cards are now `motion.div` wrappers with staggered delays (header at 0s, KPIs at 60–285ms, charts at 360–585ms — the same cadence as the old CSS, but via Framer Motion's `transition.delay`).
+   - Replaced the hand-rolled `HBar` priority rows with a new **`PriorityBars` component** using Recharts — a vertical-layout `BarChart` inside a `ResponsiveContainer`, one `Cell` per priority color, `radius={[6,6,6,6]}` rounded corners, `isAnimationActive` with a 750ms ease-out entrance, and `LabelList` for the count printed to the right of each bar. Cursor changes to a pointer on hover and clicking a bar fires the existing drilldown via an `onClick={(entry) => onBarClick(entry.label)}` shim that maps the bar back to `filterByPriority()`. Custom `PriorityTooltipContent` component renders a glass popover (`popover/92` + `backdrop-blur-xl` + border + 2xl shadow) showing the priority label, count, and a "Click bar to drill down" hint.
+   - Tooltip uses `cursor={{ fill: "currentColor", fillOpacity: 0.05 }}` so the hover highlight band respects the current text color (works in both themes). The Y-axis tick text gets `fillOpacity: 0.65` against `currentColor` for the same reason.
+   - KPI card borders keep their `borderLeft: 3px solid ${kpi.accent}` accent but now also inherit the `GLASS_CARD` class via `cn()` — `twMerge` correctly resolves the `bg-gradient-*` override against the base Card's `bg-card`.
+   - ChartCard gets a subtle accent radial glow in the top-right corner (`-top-12 -right-12 h-40 w-40 rounded-full opacity-[0.07] blur-3xl`), layered behind the content with `pointer-events-none`.
+   - Removed the now-unused `priorityMax` memo since Recharts scales its own X axis.
+
+3. **Board (`src/components/dashboard/board-dashboard.tsx`):**
+   - Same motion tokens pattern — `MOTION_RISE` (450ms) for columns, a separate `CARD_MOTION` (320ms, `y 6→0`) for the smaller per-card entrance.
+   - Two new glass tokens: `GLASS_COLUMN` (deeper multi-stop gradient, `backdrop-blur-xl`, inset + outer shadow) and `GLASS_CARD_SURFACE` (lighter `backdrop-blur-md` + inset shadow for the cards floating on top of the column).
+   - `SortableColumn` is now a `motion.div` directly — the outer sortable wrapper stays unchanged (dnd-kit's `setNodeRef` / transform stays on a plain `div` above the motion level, not on `motion.div`, so there's no conflict between the dnd-kit transform and Framer Motion's animate transform).
+   - `SortableCard` gained an `index` prop. Inside the dnd-kit wrapper div, a `motion.div` applies `CARD_MOTION` with `delay = min(index, 12) * 0.035` — subtle stagger that caps at the 12th card so long work columns don't have a "piano roll" effect when they mount.
+   - `ActionItemCard`, `ProjectCard`, `IdeaCard`, and `ParkingLotCard` all swapped their `bg-card` / `border-border/40` surfaces for `bg-card/70 dark:bg-card/40` over the `GLASS_CARD_SURFACE` token. Borders moved to `border-white/40 dark:border-white/[0.06]` for a softer edge.
+   - The sticky column header is now `bg-white/55 dark:bg-background/55 backdrop-blur-2xl` with a matching white-alpha border — more pronounced glass than the old `bg-background/70 backdrop-blur-xl`.
+   - Deleted `BOARD_ANIM_CSS` and the `<style>` tag. Board header became a `motion.div`; added the backdrop-blur-xl treatment to its icon badge to match the dashboard header.
+   - Passed `index={idx}` to every `SortableCard` from all four columns' `.map()` calls.
+
+4. **Validated + deployed:**
+   - `npm run build` → green, 31s, one pre-existing chunk-size warning (1.19MB bundle, 346KB gzip — the recharts + framer-motion add-on is absorbed into the same vendor chunk). The warning is cosmetic and has been in place since well before this phase.
+   - `pac org who` → confirmed `og-code` target before the push.
+   - `pac code push` → success. App URL unchanged: `https://apps.gov.powerapps.us/play/e/efacb6cc-fa92-e0d7-b073-e02733c4b337/app/b66395f5-3497-4ee0-95ff-ea6f22028478`.
+
+**Files changed:**
+- `package.json`, `package-lock.json` — added `framer-motion` + `recharts`
+- `src/components/dashboard/dashboard.tsx`
+- `src/components/dashboard/board-dashboard.tsx`
+- Docs: `README.md`, `ARCHITECTURE.md`, `USER-GUIDE.md`, `FAQ.md`, `HOW-I-WAS-BUILT.md`
+
+**Key lessons:**
+- **`twMerge` handles Tailwind override conflicts cleanly** — passing `cn(GLASS_CARD)` to a shadcn `Card` that already has `bg-card` on it correctly resolves to the gradient-bg version. No need to build a custom `glass-card` variant at the primitive level.
+- **Framer Motion + dnd-kit composes fine as long as you keep their transforms on different DOM nodes.** Put `setNodeRef` + the dnd-kit CSS transform on the outer div, wrap children in a `motion.div` for the entrance. Wrapping dnd-kit's ref node *with* `motion.div` would mix animation transforms and drag transforms and cause drift.
+- **Recharts `onClick` on a `Bar` gets the datum, not a DOM event** — the second arg is the chart click state. `onClick={(entry) => onBarClick(entry.label)}` is the clean pattern; typing it as `(entry: PriorityDatum)` works because Recharts narrows the payload to your data type.
+- **Cap per-card stagger on lists that can grow.** `Math.min(index, 12) * 0.035` keeps the total entrance under ~420ms no matter how many cards — important for the work column in the board, which can easily hit 20+ items.
+- **Stock chunk-size warnings are not a bug to fix in a UI PR.** The `> 500 kB` warning is Vite's default threshold; for an enterprise SPA with recharts + framer-motion + shadcn + TanStack Query, 1.2MB (346KB gzipped) is fine. Revisit with `manualChunks` only if the demo ever starts feeling slow on first paint.

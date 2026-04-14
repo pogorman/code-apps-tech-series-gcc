@@ -60,6 +60,25 @@ Same pattern as action item Priority/Status/Type. The `tdvsp_category` field use
 
 Hover any dashboard tile (KPI card or chart sub-element) to see a tooltip previewing the underlying data — item count, first 4 item names, and a "Click to view details" hint. Click to open a drilldown dialog showing a full filtered table of the action items behind that visualization. Tooltips use a pure CSS approach (Tailwind `group/tip` + `group-hover/tip`) — no tooltip library. KPI cards at the top use `position="below"` to avoid clipping off the viewport; chart sub-elements use `position="above"` (default). Reverse-lookup maps (`STATUS_KEY_BY_LABEL`, `PRIORITY_KEY_BY_LABEL`, `TYPE_KEY_BY_LABEL`) convert display labels back to Dataverse numeric choice keys for filtering.
 
+## How does the Priority Distribution chart work?
+
+As of Phase 24 it's a **Recharts** `BarChart` (vertical layout — horizontal bars, one per priority) inside a `ResponsiveContainer`, in `src/components/dashboard/dashboard.tsx`. One `Cell` per priority color, rounded corners via `radius={[6,6,6,6]}`, entrance animation `isAnimationActive` at 750ms ease-out, and a `LabelList` rendering the count at the right end of each bar. The Y-axis tick text inherits `currentColor` with `fillOpacity: 0.65` so the same chart works in both light and dark mode.
+
+Hovering a bar shows a custom `PriorityTooltipContent` component (rendered in the same glass-popover style as the rest of the dashboard) with the priority label, exact count, item/items pluralization, and a "Click bar to drill down" hint. Clicking a bar fires the same drilldown dialog used by the other dashboard elements — the `Bar` has `onClick={(entry: PriorityDatum) => onBarClick(entry.label)}` which maps back to `filterByPriority()` and calls `openDrilldown()`.
+
+Recharts passes the datum (not a DOM event) as the `onClick` payload, so typing it as your own `PriorityDatum` interface is the clean pattern. This replaced the older hand-rolled `HBar` component, which has been removed along with the `priorityMax` memo (Recharts scales its own X axis).
+
+## Where is the glassmorphism styling defined?
+
+In two class tokens at the top of the dashboard/board files:
+
+- **`GLASS_CARD`** (`src/components/dashboard/dashboard.tsx`) — used on KPI and chart cards. A light-to-dark white-alpha gradient (`from-white/75 via-white/55 to-white/35` in light mode, `from-white/[0.06] via-white/[0.03] to-white/[0.01]` in dark) layered over `backdrop-blur-xl`, with a `white/50` border and a two-layer shadow (inset highlight + outer lift).
+- **`GLASS_COLUMN`** and **`GLASS_CARD_SURFACE`** (`src/components/dashboard/board-dashboard.tsx`) — a deeper multi-stop gradient + `backdrop-blur-xl` for column containers, and a lighter `backdrop-blur-md` + inset shadow for the cards floating on top of the column.
+
+Applied via `cn(GLASS_CARD, ...)`. `tailwind-merge` resolves the override cleanly against the base shadcn `Card`'s `bg-card` class — no need to build a dedicated glass variant at the primitive level.
+
+The sticky column header on the board uses a stronger `backdrop-blur-2xl` at `bg-white/55 dark:bg-background/55` so it stays legible over scrolling content.
+
 ## How does the "Extract Action Items with AI" feature work?
 
 On the Meeting Summaries page, click the sparkle icon on any meeting summary row to open the AI extraction dialog. It sends the meeting notes to Azure OpenAI (configured via `VITE_AOAI_ENDPOINT`, `VITE_AOAI_API_KEY`, `VITE_AOAI_DEPLOYMENT` env vars). The AI returns a JSON array of action items with name, priority, due date, and notes. You can review, edit, or remove items before confirming. On confirm, each item is created in Dataverse as a `tdvsp_actionitem` with the meeting's account linked automatically. If the env vars aren't set, the button shows a toast instead.
@@ -169,7 +188,9 @@ Click the small chevron button floating on the sidebar's right edge. The sidebar
 
 ## Why do dashboard tiles animate on load?
 
-The dashboard uses a `dashRise` CSS keyframe animation (fade up + subtle scale) with staggered delays — KPI cards animate first, then chart panels cascade in. The board columns use the same animation with their own stagger. This creates a polished "data loading" feel for enterprise demos without requiring a motion library.
+The dashboard and board now use **Framer Motion** (`framer-motion@12.23.12`) for entrance animations. A shared `MOTION_RISE` variant (`opacity 0→1, y 14→0`, 450ms, `cubic-bezier(0.16, 1, 0.3, 1)`) is applied to the page header, KPI cards, and chart panels via `motion.div` wrappers, with staggered `transition.delay` values so the cards cascade in. The board uses the same pattern for columns and a shorter `CARD_MOTION` variant (320ms, `y 6→0`) for the per-card entrance inside each column. The per-card delay is capped at `min(index, 12) * 0.035s` so long work columns don't have a long "piano roll" tail on mount.
+
+The older hand-rolled `dashRise` CSS keyframe was replaced in Phase 24 — both it and the inline `<style>` tags that drove it have been removed from `dashboard.tsx` and `board-dashboard.tsx`.
 
 ## What ports does local dev use?
 

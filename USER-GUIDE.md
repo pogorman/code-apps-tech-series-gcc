@@ -18,15 +18,19 @@ Dark mode inverts all colors: dark backgrounds, light text, and adjusted accent 
 
 ## Dashboard
 
-The Dashboard is the home view, showing action item analytics.
+The Dashboard is the home view, showing action item analytics. KPI cards and chart panels use a glassmorphism surface (frosted blur, soft inset highlight, accent corner glow) and rise in with a subtle Framer Motion fade-up on load — header first, then KPIs, then chart cards. Animations are deliberately short (~450ms) so the page doesn't feel slow.
 
 ### KPI Cards (top row)
 
-Four summary cards: Total Items, Completion Rate, In Progress, and High/Top Priority. Each card has a colored left accent border, a subtle glow, and an icon in a tinted badge. Cards animate in on page load with a staggered fade-up effect. Hover any card to see a frosted-glass tooltip with item count and first 4 item names. Click to open a drilldown table showing all matching action items.
+Four summary cards: Total Items, Completion Rate, In Progress, and High/Top Priority. Each card has a colored left accent border, a subtle glow, and an icon in a tinted glass badge. Hover any card to see a frosted-glass tooltip with item count and first 4 item names. Click to open a drilldown table showing all matching action items.
 
 ### Charts (bottom row)
 
-Four chart panels: Status Breakdown (SVG donut with background track ring), Priority Distribution (pill-shaped gradient bars), Task Types (segmented overview bar + per-type icons and progress bars), and Items by Account (progress bars). Each panel has a colored accent line at the top and a vertical bar indicator next to the section title. Each sub-element is independently hoverable and clickable. Hover for a frosted-glass tooltip preview; click for a full drilldown table.
+Four chart panels: Status Breakdown (SVG donut with background track ring), Priority Distribution (**Recharts** animated horizontal bars, one per priority, with rounded ends and count labels), Task Types (segmented overview bar + per-type icons and progress bars), and Items by Account (progress bars). Each panel has a colored accent line at the top and a vertical bar indicator next to the section title.
+
+**Priority bars:** Hover any bar to see an interactive Recharts tooltip (rendered in the same glass popover style as the rest of the dashboard) showing the priority label, exact count, and a "Click bar to drill down" hint. Click a bar to open the full drilldown dialog for that priority — same behavior as clicking any other dashboard element.
+
+Every other chart sub-element is independently hoverable and clickable: hover for a frosted-glass tooltip preview, click for a full drilldown table.
 
 ### Drilldown Dialog
 
@@ -41,7 +45,7 @@ Click **My Board** in the sidebar to open a Kanban-style view with four columns:
 - **Projects** (purple accent, FolderKanban icon) — All project records. Cards show project name and priority pill.
 - **Ideas** (amber accent, Lightbulb icon) — All ideas. Cards show idea name and category pill.
 
-Columns have glass-morphism sticky headers (frosted blur effect) with an overlapping accent-colored count badge. The work column is wider than the others (2x width) to accommodate more detail. Empty columns show a large faded icon. Cards have subtle priority-tinted gradient backgrounds, hover lift animation, and compact `text-xs` titles. **Click any card** to open its edit form dialog directly — no need to use the toolbar pencil.
+Columns themselves are glassmorphism surfaces — a soft gradient fill over `backdrop-blur-xl` with a subtle inset highlight and lift shadow. Sticky column headers add a stronger `backdrop-blur-2xl` so they stay legible over scrolling content. Each column also fades up on mount via Framer Motion, and the cards inside stagger in with a short per-card entrance (capped at the 12th card so long work columns mount quickly). The work column is wider than the others (2x width) to accommodate more detail. Empty columns show a large faded icon. Cards have subtle priority-tinted gradient backgrounds over a frosted card surface, hover lift animation, and compact `text-xs` titles. **Click any card** to open its edit form dialog directly — no need to use the toolbar pencil.
 
 ### Floating Card Toolbar
 

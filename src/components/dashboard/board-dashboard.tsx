@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
   DndContext,
   closestCenter,
@@ -111,14 +112,41 @@ const ACCENT = {
   ideas: "#EF9F27",
 } as const;
 
-/* ── animation keyframes ──────────────────────────────────────── */
+/* ── motion (subtle entrance) ─────────────────────────────────── */
 
-const BOARD_ANIM_CSS = `
-@keyframes dashRise {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-`;
+const MOTION_RISE = {
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0 },
+} as const;
+
+const MOTION_TRANSITION = {
+  duration: 0.45,
+  ease: [0.16, 1, 0.3, 1] as const,
+};
+
+const CARD_MOTION = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0 },
+} as const;
+
+const CARD_TRANSITION = {
+  duration: 0.32,
+  ease: [0.16, 1, 0.3, 1] as const,
+};
+
+/* ── glassmorphism tokens for columns/cards ───────────────────── */
+
+const GLASS_COLUMN =
+  "bg-gradient-to-b from-white/55 via-white/35 to-white/25 " +
+  "dark:from-white/[0.045] dark:via-white/[0.02] dark:to-white/[0.01] " +
+  "backdrop-blur-xl " +
+  "shadow-[0_1px_0_0_rgba(255,255,255,0.35)_inset,0_8px_32px_-12px_rgba(15,23,42,0.12)] " +
+  "dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_8px_32px_-12px_rgba(0,0,0,0.5)]";
+
+const GLASS_CARD_SURFACE =
+  "backdrop-blur-md " +
+  "shadow-[0_1px_0_0_rgba(255,255,255,0.35)_inset,0_4px_12px_-4px_rgba(15,23,42,0.1)] " +
+  "dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_4px_16px_-4px_rgba(0,0,0,0.5)]";
 
 /* ── localStorage sort order helpers ─────────────────────────── */
 
@@ -164,9 +192,11 @@ type DragHandleProps = {
 
 function SortableCard({
   id,
+  index = 0,
   children,
 }: {
   id: string;
+  index?: number;
   children: (handle: DragHandleProps) => React.ReactNode;
 }) {
   const {
@@ -184,6 +214,9 @@ function SortableCard({
     ...(isDragging ? { position: "relative" as const, zIndex: 9999 } : {}),
   };
 
+  /* Cap stagger so long lists don't have a long tail */
+  const staggerDelay = Math.min(index, 12) * 0.035;
+
   return (
     <div
       ref={setNodeRef}
@@ -195,7 +228,13 @@ function SortableCard({
           : "hover:-translate-y-0.5",
       )}
     >
-      {children({ attributes, listeners })}
+      <motion.div
+        initial={CARD_MOTION.initial}
+        animate={CARD_MOTION.animate}
+        transition={{ ...CARD_TRANSITION, delay: staggerDelay }}
+      >
+        {children({ attributes, listeners })}
+      </motion.div>
     </div>
   );
 }
@@ -321,8 +360,9 @@ function ActionItemCard({
   return (
     <div
       className={cn(
-        "relative rounded-lg border border-border/40 dark:border-border/25 bg-card px-3.5 pt-3 pb-7 cursor-pointer",
-        "shadow-sm hover:shadow-md transition-all duration-300",
+        "relative rounded-lg border border-white/40 dark:border-white/[0.06] bg-card/70 dark:bg-card/40 px-3.5 pt-3 pb-7 cursor-pointer",
+        GLASS_CARD_SURFACE,
+        "hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300",
         tileBgClass(colorIdx),
       )}
       style={{ backgroundImage: tileGradient(colorIdx) }}
@@ -395,8 +435,9 @@ function ProjectCard({
   return (
     <div
       className={cn(
-        "relative rounded-lg border border-border/40 dark:border-border/25 bg-card px-3.5 pt-3 pb-7 cursor-pointer",
-        "shadow-sm hover:shadow-md transition-all duration-300",
+        "relative rounded-lg border border-white/40 dark:border-white/[0.06] bg-card/70 dark:bg-card/40 px-3.5 pt-3 pb-7 cursor-pointer",
+        GLASS_CARD_SURFACE,
+        "hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300",
         tileBgClass(colorIdx),
       )}
       style={{ backgroundImage: tileGradient(colorIdx) }}
@@ -458,8 +499,9 @@ function IdeaCard({
   return (
     <div
       className={cn(
-        "relative rounded-lg border border-border/40 dark:border-border/25 bg-card px-3.5 pt-3 pb-7 cursor-pointer",
-        "shadow-sm hover:shadow-md transition-all duration-300",
+        "relative rounded-lg border border-white/40 dark:border-white/[0.06] bg-card/70 dark:bg-card/40 px-3.5 pt-3 pb-7 cursor-pointer",
+        GLASS_CARD_SURFACE,
+        "hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300",
         tileBgClass(colorIdx),
       )}
       style={{ backgroundImage: tileGradient(colorIdx) }}
@@ -519,8 +561,9 @@ function ParkingLotCard({ entry, dragHandle }: { entry: ParkingLotEntry; dragHan
   return (
     <div
       className={cn(
-        "relative rounded-lg border border-border/40 dark:border-border/25 bg-card px-3.5 py-3 cursor-pointer",
-        "shadow-sm hover:shadow-md transition-all duration-300",
+        "relative rounded-lg border border-white/40 dark:border-white/[0.06] bg-card/70 dark:bg-card/40 px-3.5 py-3 cursor-pointer",
+        GLASS_CARD_SURFACE,
+        "hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300",
         tileBgClass(entry.colorIdx),
       )}
       style={{ backgroundImage: tileGradient(entry.colorIdx) }}
@@ -594,23 +637,31 @@ function SortableColumn({
   const { setNodeRef } = useDroppable({ id: `col-${columnKey}` });
 
   return (
-    <div
+    <motion.div
+      initial={MOTION_RISE.initial}
+      animate={MOTION_RISE.animate}
+      transition={{
+        ...MOTION_TRANSITION,
+        delay: delay != null ? delay / 1000 : 0,
+      }}
       className={cn(
-        "flex min-w-0 rounded-xl border bg-muted/20 dark:bg-muted/10 backdrop-blur-sm transition-all duration-300",
+        "flex min-w-0 rounded-xl border overflow-hidden transition-all duration-300",
+        GLASS_COLUMN,
         isDropTarget
           ? "border-2 ring-2 ring-offset-1 scale-[1.01] shadow-xl"
-          : "border-border/40 dark:border-border/25",
+          : "border-white/40 dark:border-white/[0.07]",
       )}
-      style={{
-        ...(isDropTarget ? { borderColor: accent, boxShadow: `0 0 24px ${accent}30, 0 0 48px ${accent}15` } : {}),
-        ...(delay != null ? { animation: `dashRise 0.55s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms both` } : {}),
-      }}
+      style={
+        isDropTarget
+          ? { borderColor: accent, boxShadow: `0 0 24px ${accent}30, 0 0 48px ${accent}15` }
+          : undefined
+      }
     >
       {/* accent left bar */}
       <div className="w-[3px] shrink-0 rounded-l-xl transition-colors duration-300" style={{ background: accent }} />
       <div className="flex flex-col min-w-0 flex-1">
         {/* glass-morphism header */}
-        <div className="sticky top-0 z-[5] px-4 py-3 bg-background/70 backdrop-blur-xl border-b border-border/20 dark:border-border/15 rounded-tr-xl">
+        <div className="sticky top-0 z-[5] px-4 py-3 bg-white/55 dark:bg-background/55 backdrop-blur-2xl border-b border-white/40 dark:border-white/[0.07] rounded-tr-xl">
           <div className="flex items-center gap-2">
             {/* accent vertical bar indicator */}
             <div className="w-1 h-5 rounded-full shrink-0" style={{ background: accent }} />
@@ -647,7 +698,7 @@ function SortableColumn({
           </div>
         </SortableContext>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -963,24 +1014,24 @@ export function BoardDashboard() {
   }
 
   return (
-    <>
-      <style>{BOARD_ANIM_CSS}</style>
-      <div className="space-y-5 h-full flex flex-col">
-        {/* Header */}
-        <div
-          className="flex items-center gap-3 shrink-0"
-          style={{ animation: "dashRise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both" }}
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15">
-            <Columns3 className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">My Board</h1>
-            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/50">
-              Kanban view across action items, projects &amp; ideas
-            </p>
-          </div>
+    <div className="space-y-5 h-full flex flex-col">
+      {/* Header */}
+      <motion.div
+        className="flex items-center gap-3 shrink-0"
+        initial={MOTION_RISE.initial}
+        animate={MOTION_RISE.animate}
+        transition={MOTION_TRANSITION}
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15 backdrop-blur-xl border border-white/20 dark:border-white/[0.06]">
+          <Columns3 className="h-5 w-5 text-primary" />
         </div>
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight">My Board</h1>
+          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/50">
+            Kanban view across action items, projects &amp; ideas
+          </p>
+        </div>
+      </motion.div>
 
         {/* 4-column board — single DndContext for cross-column drag */}
         <DndContext
@@ -1001,8 +1052,8 @@ export function BoardDashboard() {
             isDropTarget={overColumn === "parkingLot"}
             delay={60}
           >
-            {sortedParkingLot.map((entry) => (
-              <SortableCard key={entry.sortId} id={entry.sortId}>
+            {sortedParkingLot.map((entry, idx) => (
+              <SortableCard key={entry.sortId} id={entry.sortId} index={idx}>
                 {(handle) => <ParkingLotCard entry={entry} dragHandle={handle} />}
               </SortableCard>
             ))}
@@ -1052,8 +1103,8 @@ export function BoardDashboard() {
               </div>
             }
           >
-            {work.map((item) => (
-              <SortableCard key={item.tdvsp_actionitemid} id={item.tdvsp_actionitemid}>
+            {work.map((item, idx) => (
+              <SortableCard key={item.tdvsp_actionitemid} id={item.tdvsp_actionitemid} index={idx}>
                 {(handle) => (
                   <ActionItemCard
                     item={item}
@@ -1078,8 +1129,8 @@ export function BoardDashboard() {
             isDropTarget={overColumn === "projects"}
             delay={210}
           >
-            {projectList.map((project) => (
-              <SortableCard key={project.tdvsp_projectid} id={project.tdvsp_projectid}>
+            {projectList.map((project, idx) => (
+              <SortableCard key={project.tdvsp_projectid} id={project.tdvsp_projectid} index={idx}>
                 {(handle) => (
                   <ProjectCard
                     project={project}
@@ -1103,8 +1154,8 @@ export function BoardDashboard() {
             isDropTarget={overColumn === "ideas"}
             delay={285}
           >
-            {ideaList.map((idea) => (
-              <SortableCard key={idea.tdvsp_ideaid} id={idea.tdvsp_ideaid}>
+            {ideaList.map((idea, idx) => (
+              <SortableCard key={idea.tdvsp_ideaid} id={idea.tdvsp_ideaid} index={idx}>
                 {(handle) => (
                   <IdeaCard
                     idea={idea}
@@ -1120,32 +1171,31 @@ export function BoardDashboard() {
         </div>
         </DndContext>
 
-        {/* ── edit dialogs ─────────────────────────────────────── */}
-        <ActionItemFormDialog
-          open={editTarget?.kind === "action-item"}
-          onOpenChange={(open) => { if (!open) setEditTarget(null); }}
-          mode="edit"
-          actionItem={editTarget?.kind === "action-item" ? editTarget.item : undefined}
-        />
-        <IdeaFormDialog
-          open={editTarget?.kind === "idea"}
-          onOpenChange={(open) => { if (!open) setEditTarget(null); }}
-          mode="edit"
-          idea={editTarget?.kind === "idea" ? editTarget.item : undefined}
-        />
-        <ProjectFormDialog
-          open={editTarget?.kind === "project"}
-          onOpenChange={(open) => { if (!open) setEditTarget(null); }}
-          mode="edit"
-          project={editTarget?.kind === "project" ? editTarget.item : undefined}
-        />
-        <MeetingSummaryFormDialog
-          open={editTarget?.kind === "meeting-summary"}
-          onOpenChange={(open) => { if (!open) setEditTarget(null); }}
-          mode="edit"
-          meetingSummary={editTarget?.kind === "meeting-summary" ? editTarget.item : undefined}
-        />
-      </div>
-    </>
+      {/* ── edit dialogs ─────────────────────────────────────── */}
+      <ActionItemFormDialog
+        open={editTarget?.kind === "action-item"}
+        onOpenChange={(open) => { if (!open) setEditTarget(null); }}
+        mode="edit"
+        actionItem={editTarget?.kind === "action-item" ? editTarget.item : undefined}
+      />
+      <IdeaFormDialog
+        open={editTarget?.kind === "idea"}
+        onOpenChange={(open) => { if (!open) setEditTarget(null); }}
+        mode="edit"
+        idea={editTarget?.kind === "idea" ? editTarget.item : undefined}
+      />
+      <ProjectFormDialog
+        open={editTarget?.kind === "project"}
+        onOpenChange={(open) => { if (!open) setEditTarget(null); }}
+        mode="edit"
+        project={editTarget?.kind === "project" ? editTarget.item : undefined}
+      />
+      <MeetingSummaryFormDialog
+        open={editTarget?.kind === "meeting-summary"}
+        onOpenChange={(open) => { if (!open) setEditTarget(null); }}
+        mode="edit"
+        meetingSummary={editTarget?.kind === "meeting-summary" ? editTarget.item : undefined}
+      />
+    </div>
   );
 }

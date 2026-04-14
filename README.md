@@ -43,8 +43,10 @@ Open the URL from `pac code run` (not Vite directly) — it wraps the app in the
 |-------|------|
 | Framework | React 19 + TypeScript 5.9 |
 | Build | Vite 7 |
-| Styling | Tailwind CSS v4 + shadcn/ui (Microsoft Fluent Design theme, light/dark mode) |
+| Styling | Tailwind CSS v4 + shadcn/ui (Microsoft Fluent Design theme, light/dark mode, glassmorphism on dashboard/board) |
 | Data | TanStack Query + generated Dataverse services |
+| Charts | Recharts (animated priority distribution bars with interactive tooltips) |
+| Motion | Framer Motion (subtle entrance animations on dashboard cards, chart panels, kanban columns and cards) |
 | State | Zustand |
 | Icons | Lucide React |
 | Toasts | Sonner |
@@ -65,7 +67,7 @@ src/
     meeting-summaries/# Meeting Summary CRUD components
     ideas/            # Idea CRUD components
     projects/         # Project CRUD components
-    dashboard/        # Analytics dashboard (staggered animations, accent-bordered KPI cards, SVG donut, gradient chart panels) + Kanban board view (4-column drag-and-drop, staggered column entry, clickable cards, custom collision detection, accent-glow drop highlights)
+    dashboard/        # Analytics dashboard (glassmorphism KPI + chart cards, Framer Motion entrances, SVG donut, Recharts priority bars with tooltips) + Kanban board view (glassmorphism columns + cards, Framer Motion entrance with capped stagger, 4-column drag-and-drop, clickable cards, custom collision detection, accent-glow drop highlights)
     layout/           # App shell (collapsible left sidebar with colored nav icons + quick create bar with task-type presets + dark mode toggle)
     command-palette.tsx # Global Ctrl+K search
   stores/             # Zustand stores (quick create)

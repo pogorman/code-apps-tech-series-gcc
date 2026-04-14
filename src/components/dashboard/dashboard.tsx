@@ -1,4 +1,15 @@
 import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Bar,
+  BarChart,
+  Cell,
+  LabelList,
+  ResponsiveContainer,
+  Tooltip as ReTooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { useActionItems } from "@/hooks/use-action-items";
 import { useAccounts } from "@/hooks/use-accounts";
 import type { Tdvsp_actionitemsModel } from "@/generated";
@@ -9,6 +20,7 @@ import {
 } from "@/components/action-items/labels";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   ClipboardCheck,
@@ -20,6 +32,27 @@ import {
   BookOpen,
 } from "lucide-react";
 import { DrilldownDialog } from "./drilldown-dialog";
+
+/* ── shared motion variants (subtle entrance) ─────────────────── */
+
+const MOTION_RISE = {
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0 },
+} as const;
+
+const MOTION_TRANSITION = {
+  duration: 0.45,
+  ease: [0.16, 1, 0.3, 1] as const,
+};
+
+/* ── glassmorphism class tokens ────────────────────────────────── */
+
+const GLASS_CARD =
+  "bg-gradient-to-br from-white/75 via-white/55 to-white/35 " +
+  "dark:from-white/[0.06] dark:via-white/[0.03] dark:to-white/[0.01] " +
+  "backdrop-blur-xl border-white/50 dark:border-white/[0.08] " +
+  "shadow-[0_1px_0_0_rgba(255,255,255,0.4)_inset,0_8px_24px_-12px_rgba(15,23,42,0.15)] " +
+  "dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_8px_32px_-12px_rgba(0,0,0,0.55)]";
 
 type ActionItem = Tdvsp_actionitemsModel.Tdvsp_actionitems;
 
@@ -70,15 +103,6 @@ const PRIORITY_KEY_BY_LABEL = Object.fromEntries(
 const TYPE_KEY_BY_LABEL = Object.fromEntries(
   Object.entries(TASK_TYPE_LABELS).map(([k, v]) => [v, Number(k)])
 ) as Record<string, number>;
-
-/* ── animation keyframes ──────────────────────────────────────── */
-
-const ANIM_CSS = `
-@keyframes dashRise {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-`;
 
 /* ── hover tooltip ─────────────────────────────────────────────── */
 
@@ -222,48 +246,107 @@ function SvgDonut({
   );
 }
 
-/* ── horizontal bar row ────────────────────────────────────────── */
+/* ── Recharts priority bars ────────────────────────────────────── */
 
-function HBar({
-  label,
-  value,
-  max,
-  color,
-  showValue = true,
-  onClick,
-}: {
+interface PriorityDatum {
   label: string;
-  value: number;
-  max: number;
+  count: number;
   color: string;
-  showValue?: boolean;
-  onClick?: () => void;
+}
+
+function PriorityTooltipContent({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: PriorityDatum }>;
 }) {
-  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  if (!active || !payload || payload.length === 0) return null;
+  const datum = payload[0]?.payload;
+  if (!datum) return null;
   return (
-    <div
-      className={`flex items-center gap-3 text-xs py-2 rounded-lg px-2 -mx-2 ${
-        onClick
-          ? "cursor-pointer hover:bg-muted/50 dark:hover:bg-muted/30 transition-colors duration-200"
-          : ""
-      }`}
-      onClick={onClick}
-    >
-      <span className="min-w-[90px] text-muted-foreground truncate font-medium">
-        {label}
-      </span>
-      <div className="flex-1 h-6 bg-muted/60 dark:bg-muted/30 rounded-full overflow-hidden">
-        <div
-          className="h-full flex items-center pl-2.5 text-[11px] font-semibold text-white rounded-full"
-          style={{
-            width: `${Math.max(pct, value > 0 ? 10 : 0)}%`,
-            background: `linear-gradient(90deg, ${color}, ${color}cc)`,
-            transition: "width 0.7s cubic-bezier(.4,0,.2,1)",
-          }}
-        >
-          {showValue && value > 0 ? value : ""}
-        </div>
+    <div className="rounded-xl border border-border/50 bg-popover/92 backdrop-blur-xl px-3 py-2 shadow-2xl shadow-black/20 dark:shadow-black/50">
+      <div className="flex items-center gap-2">
+        <span
+          className="inline-block h-2 w-2 rounded-sm"
+          style={{ background: datum.color }}
+        />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/80">
+          {datum.label}
+        </span>
       </div>
+      <p className="mt-0.5 text-[11px] text-muted-foreground">
+        <span className="font-bold tabular-nums text-foreground">
+          {datum.count}
+        </span>{" "}
+        item{datum.count === 1 ? "" : "s"}
+      </p>
+      <p className="mt-1 border-t border-border/30 pt-1 text-[9px] uppercase tracking-[0.18em] text-muted-foreground/50">
+        Click bar to drill down
+      </p>
+    </div>
+  );
+}
+
+function PriorityBars({
+  data,
+  onBarClick,
+}: {
+  data: PriorityDatum[];
+  onBarClick: (label: string) => void;
+}) {
+  const height = Math.max(data.length * 44 + 16, 140);
+  return (
+    <div style={{ height }} className="-mx-1">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 4, right: 34, left: 4, bottom: 4 }}
+          barCategoryGap={10}
+        >
+          <XAxis type="number" hide />
+          <YAxis
+            type="category"
+            dataKey="label"
+            axisLine={false}
+            tickLine={false}
+            width={78}
+            tick={{
+              fontSize: 11,
+              fill: "currentColor",
+              fillOpacity: 0.65,
+              fontWeight: 500,
+            }}
+            className="text-muted-foreground"
+          />
+          <ReTooltip
+            cursor={{ fill: "currentColor", fillOpacity: 0.05 }}
+            content={<PriorityTooltipContent />}
+          />
+          <Bar
+            dataKey="count"
+            radius={[6, 6, 6, 6]}
+            isAnimationActive
+            animationDuration={750}
+            animationEasing="ease-out"
+            onClick={(entry: PriorityDatum) => onBarClick(entry.label)}
+            style={{ cursor: "pointer" }}
+          >
+            {data.map((d) => (
+              <Cell key={d.label} fill={d.color} />
+            ))}
+            <LabelList
+              dataKey="count"
+              position="right"
+              fill="currentColor"
+              className="fill-foreground"
+              fontSize={11}
+              fontWeight={700}
+            />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -376,34 +459,45 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card
-      className="relative overflow-hidden transition-all duration-300 hover:shadow-md dark:hover:shadow-black/20"
-      style={{
-        animation: `dashRise 0.55s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms both`,
-      }}
+    <motion.div
+      initial={MOTION_RISE.initial}
+      animate={MOTION_RISE.animate}
+      transition={{ ...MOTION_TRANSITION, delay: delay / 1000 }}
     >
-      {/* Top accent gradient line */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[2px]"
-        style={{
-          background: `linear-gradient(90deg, ${accent}, ${accent}40, transparent)`,
-        }}
-      />
-      <div className="p-5 pt-4">
-        {/* Section header */}
-        <div className="flex items-center gap-2.5 mb-3">
-          <div
-            className="w-1 h-4 rounded-full"
-            style={{ background: accent }}
-          />
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-            {title}
-          </h2>
+      <Card
+        className={cn(
+          "relative overflow-hidden transition-all duration-300 hover:shadow-xl dark:hover:shadow-black/40",
+          GLASS_CARD,
+        )}
+      >
+        {/* Top accent gradient line */}
+        <div
+          className="absolute top-0 left-0 right-0 h-[2px]"
+          style={{
+            background: `linear-gradient(90deg, ${accent}, ${accent}40, transparent)`,
+          }}
+        />
+        {/* Soft radial glow in corner */}
+        <div
+          className="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full opacity-[0.07] blur-3xl dark:opacity-[0.12]"
+          style={{ background: accent }}
+        />
+        <div className="relative p-5 pt-4">
+          {/* Section header */}
+          <div className="flex items-center gap-2.5 mb-3">
+            <div
+              className="w-1 h-4 rounded-full"
+              style={{ background: accent }}
+            />
+            <h2 className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+              {title}
+            </h2>
+          </div>
+          <div className="h-px bg-border/40 dark:bg-border/20 -mx-5 mb-4" />
+          {children}
         </div>
-        <div className="h-px bg-border/40 dark:bg-border/20 -mx-5 mb-4" />
-        {children}
-      </div>
-    </Card>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -598,10 +692,6 @@ export function Dashboard() {
   }));
 
   const statusTotal = stats.statusCounts.reduce((s, d) => s + d.count, 0);
-  const priorityMax = Math.max(
-    ...stats.priorityCounts.map((p) => p.count),
-    1
-  );
   const accountMax = Math.max(
     ...stats.accountCounts.map((a) => a.count),
     1
@@ -648,38 +738,43 @@ export function Dashboard() {
   ];
 
   return (
-    <>
-      <style>{ANIM_CSS}</style>
-      <div className="space-y-5">
-        {/* Header */}
-        <div
-          className="flex items-center gap-3"
-          style={{
-            animation:
-              "dashRise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both",
-          }}
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15">
-            <LayoutDashboard className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">
-              Action Items
-            </h1>
-            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/50">
-              Insights at a glance
-            </p>
-          </div>
+    <div className="space-y-5">
+      {/* Header */}
+      <motion.div
+        className="flex items-center gap-3"
+        initial={MOTION_RISE.initial}
+        animate={MOTION_RISE.animate}
+        transition={MOTION_TRANSITION}
+      >
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15 backdrop-blur-xl border border-white/20 dark:border-white/[0.06]">
+          <LayoutDashboard className="h-5 w-5 text-primary" />
         </div>
+        <div>
+          <h1 className="text-lg font-semibold tracking-tight">
+            Action Items
+          </h1>
+          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/50">
+            Insights at a glance
+          </p>
+        </div>
+      </motion.div>
 
-        {/* KPI Cards */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {kpis.map((kpi, idx) => {
-            const filtered = kpi.filterItems();
-            const Icon = kpi.icon;
-            return (
+      {/* KPI Cards */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {kpis.map((kpi, idx) => {
+          const filtered = kpi.filterItems();
+          const Icon = kpi.icon;
+          return (
+            <motion.div
+              key={kpi.label}
+              initial={MOTION_RISE.initial}
+              animate={MOTION_RISE.animate}
+              transition={{
+                ...MOTION_TRANSITION,
+                delay: 0.06 + idx * 0.07,
+              }}
+            >
               <Tip
-                key={kpi.label}
                 items={filtered}
                 label={kpi.label.toLowerCase()}
                 onClick={() =>
@@ -688,15 +783,15 @@ export function Dashboard() {
                 position="below"
               >
                 <Card
-                  className="group/kpi relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-black/25"
-                  style={{
-                    borderLeft: `3px solid ${kpi.accent}`,
-                    animation: `dashRise 0.55s cubic-bezier(0.16, 1, 0.3, 1) ${60 + idx * 75}ms both`,
-                  }}
+                  className={cn(
+                    "group/kpi relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl dark:hover:shadow-black/40",
+                    GLASS_CARD,
+                  )}
+                  style={{ borderLeft: `3px solid ${kpi.accent}` }}
                 >
                   {/* Subtle accent radial glow */}
                   <div
-                    className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-[0.06] dark:opacity-[0.10] blur-2xl pointer-events-none"
+                    className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-[0.10] dark:opacity-[0.15] blur-2xl pointer-events-none"
                     style={{ background: kpi.accent }}
                   />
 
@@ -706,8 +801,8 @@ export function Dashboard() {
                         {kpi.label}
                       </p>
                       <div
-                        className="flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover/kpi:scale-110"
-                        style={{ background: `${kpi.accent}14` }}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg backdrop-blur-md border border-white/20 dark:border-white/[0.06] transition-transform duration-300 group-hover/kpi:scale-110"
+                        style={{ background: `${kpi.accent}1f` }}
                       >
                         <Icon
                           className="h-4 w-4"
@@ -724,9 +819,10 @@ export function Dashboard() {
                   </div>
                 </Card>
               </Tip>
-            );
-          })}
-        </div>
+            </motion.div>
+          );
+        })}
+      </div>
 
         {/* Charts row 1 */}
         <div className="grid gap-4 lg:grid-cols-2">
@@ -766,28 +862,21 @@ export function Dashboard() {
           {/* Priority distribution */}
           <ChartCard title="Priority Distribution" accent="#EF9F27" delay={435}>
             {stats.priorityCounts.length > 0 ? (
-              <div className="space-y-0.5">
-                {stats.priorityCounts.map((p) => {
-                  const filtered = filterByPriority(p.label);
-                  return (
-                    <Tip
-                      key={p.label}
-                      items={filtered}
-                      label={`${p.label.toLowerCase()} priority items`}
-                      onClick={() =>
-                        openDrilldown(`Priority: ${p.label}`, filtered)
-                      }
-                    >
-                      <HBar
-                        label={p.label}
-                        value={p.count}
-                        max={priorityMax}
-                        color={p.color}
-                      />
-                    </Tip>
-                  );
-                })}
-                <div className="mt-3 pt-3 border-t border-border/40 dark:border-border/20 flex justify-between items-center px-2 -mx-2">
+              <div>
+                <PriorityBars
+                  data={stats.priorityCounts.map((p) => ({
+                    label: p.label,
+                    count: p.count,
+                    color: p.color,
+                  }))}
+                  onBarClick={(label) =>
+                    openDrilldown(
+                      `Priority: ${label}`,
+                      filterByPriority(label),
+                    )
+                  }
+                />
+                <div className="mt-2 pt-3 border-t border-border/40 dark:border-border/20 flex justify-between items-center px-2 -mx-2">
                   <span className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground/60">
                     High + top priority
                   </span>
@@ -921,16 +1010,15 @@ export function Dashboard() {
           </ChartCard>
         </div>
 
-        {/* Drilldown dialog */}
-        <DrilldownDialog
-          open={drilldown !== null}
-          onOpenChange={(open) => {
-            if (!open) setDrilldown(null);
-          }}
-          title={drilldown?.title ?? ""}
-          items={drilldown?.items ?? []}
-        />
-      </div>
-    </>
+      {/* Drilldown dialog */}
+      <DrilldownDialog
+        open={drilldown !== null}
+        onOpenChange={(open) => {
+          if (!open) setDrilldown(null);
+        }}
+        title={drilldown?.title ?? ""}
+        items={drilldown?.items ?? []}
+      />
+    </div>
   );
 }
