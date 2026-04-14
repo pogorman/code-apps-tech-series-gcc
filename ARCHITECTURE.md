@@ -92,6 +92,39 @@ The dark color palette is a complete set of CSS custom properties in `index.css 
 
 A toggle button (Sun/Moon icon) sits in the sidebar footer beneath the Ctrl+K shortcut hint.
 
+## Dataverse Metadata Tooling (`scripts/`)
+
+Python-based tooling for managing `TheDataverseSolution` schema from the repo. The plugin's stock `dv-connect` Python SDK is preferred for record CRUD and table/column creation; these scripts specifically cover metadata description writes, which the SDK doesn't yet expose.
+
+- **`scripts/auth.py`** — Azure Identity credential helper shared by every Python script. Patched for **US Gov Cloud**: detects `crm9` in `DATAVERSE_URL` and uses `AzureAuthorityHosts.AZURE_GOVERNMENT` + a separate persisted auth-record file (`dataverse_cli_auth_record_gov.json`) so the GCC login doesn't collide with a commercial-cloud record on the same machine. Device code flow caches into OS credential storage; new processes silently refresh. **Do not overwrite** this file with the vanilla plugin `auth.py` without re-applying the Gov patches.
+- **`scripts/list-solution-tables.py`** — SDK-based discovery. Queries `solution` where `friendlyname == "The Dataverse Solution"`, reads `solutioncomponent` rows filtered to `componenttype eq 1` (Entity), then resolves each `objectid` (MetadataId) via `/api/data/v9.2/EntityDefinitions({id})`. For `tdvsp_` tables it pulls the full attribute list (Dataverse `$filter startswith` isn't supported on MetadataEntities, so filtering is client-side). Writes a structured JSON snapshot to `solution-tables.json`.
+- **`scripts/apply-descriptions.py`** — Read-modify-write loop. Reads `descriptions-plan.json`, then for each table GETs the full `EntityDefinition`, injects the new Description label, and PUTs the whole object back. Attribute descriptions require a typed cast URL (e.g. `/Attributes({MetadataId})/Microsoft.Dynamics.CRM.StringAttributeMetadata`). Both requests send `MSCRM.MergeLabels: true` (preserve other-language labels) and `MSCRM.SolutionName: TheDataverseSolution` (track the change in the unmanaged solution). After all writes succeed it calls `PublishAllXml`. Failures halt the publish step.
+
+### Why read-modify-write (not PATCH or per-property PUT)
+
+Dataverse metadata endpoints have parity with the .NET SDK's `UpdateEntityRequest` / `UpdateAttributeRequest`, which replace the entire object. Per Microsoft Learn: *"You can't use PATCH to update data model entities… you must use PUT… and include all the existing properties that you don't intend to change. You can't update individual properties."* Attempting `PATCH EntityDefinition(...)` returns `405 Operation not supported on EntityMetadata`, and `PUT .../Description` returns `400 Argument must be of type...` because the endpoint expects a full entity body. The working pattern is: GET full object → mutate the one field → PUT the whole thing back.
+
+## Dataverse Solution as Source of Truth
+
+`TheDataverseSolution` is exported (unmanaged) and unpacked into `./solutions/TheDataverseSolution/` after every metadata change. The XML under `Entities/<EntityName>/Entity.xml` holds the authoritative `<Descriptions>` block for each table and column — if you need to audit what a Copilot Studio agent sees, read the solution XML rather than trusting the live environment.
+
+```
+solutions/TheDataverseSolution/
+  Entities/
+    Account/Entity.xml
+    Contact/Entity.xml
+    tdvsp_ActionItem/Entity.xml
+    tdvsp_HVA/Entity.xml
+    tdvsp_Idea/Entity.xml
+    tdvsp_Impact/Entity.xml
+    tdvsp_MeetingSummary/Entity.xml
+    tdvsp_Project/Entity.xml
+  OptionSets/                  # tdvsp_ideacategory, tdvsp_taskpriority, tdvsp_taskstatus, tdvsp_tasktype
+  Other/                       # Customizations.xml, Relationships.xml, Solution.xml
+  AppModules/ + AppModuleSiteMaps/  # tdvsp_OGsApp (model-driven app stub)
+  WebResources/                # tile icons (blueprint, briefcase, checklist, etc.)
+```
+
 ## Non-App Artifacts
 
 ### `demo-materials/`

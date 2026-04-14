@@ -464,6 +464,58 @@ All changes in `src/components/layout/app-layout.tsx`.
 
 **Files changed:** `board-dashboard.tsx`
 
+## Phase 22 — Dataverse Description Enrichment for Copilot Studio Agent
+
+**Prompt:** "use my active pac auth profile for https://og-code.crm9.dynamics.com/. There is a solution called The Dataverse Solution. It hosts the tables that our app in this project interact w. Each table in that solution need to have an awesome description added to them so a copilot studio agent using the dataverse mcp server tool can better find things. We also need to do any custom column, ie any column that starts with tdvsp_ needs a good description (in those custom tables that also start with tdvsp_)."
+
+**Why:** A Copilot Studio agent pointed at the same environment uses the Dataverse MCP server to discover and query entities. With blank or generic descriptions, the agent struggles to pick the right table when a user asks natural-language questions like "show me all tasks for Contoso" or "what ideas do we have in the backlog". Rich, synonym-heavy descriptions give it enough signal to route queries correctly without custom prompt engineering.
+
+**What happened:**
+
+1. **Workspace bootstrap** — The repo was not yet set up for the Python `dataverse` skill plugin. Ran the plugin's connect flow: installed `azure-identity`, `requests`, `PowerPlatform-Dataverse-Client`, and `pandas`; created `scripts/` with `auth.py` + `enable-mcp-client.py`; wrote `.env` with `DATAVERSE_URL=https://og-code.crm9.dynamics.com/` and `TENANT_ID=426a6ef4-2476-4eab-ae1c-1c9dc2bfca80` (probed from the Dataverse WWW-Authenticate header).
+
+2. **Gov Cloud auth patch** — The stock `scripts/auth.py` assumed commercial cloud (`login.microsoftonline.com`) and persisted its `AuthenticationRecord` to a single shared file. Both assumptions break for `crm9` (US Gov L4):
+   - Added `_is_gov_cloud()` detection from `DATAVERSE_URL`
+   - Set `authority=AzureAuthorityHosts.AZURE_GOVERNMENT` on `DeviceCodeCredential` / `ClientSecretCredential` when Gov
+   - Persisted to a separate `dataverse_cli_auth_record_gov.json` so the Gov record coexists with any commercial-cloud record from other projects on the same machine
+   - Guarded against `got multiple values for keyword argument 'authority'` when an `authentication_record` is already present (the record encodes its own authority — only pass the `authority` kwarg on first login)
+
+3. **Solution + table discovery** (`scripts/list-solution-tables.py`) — SDK query for `solution` filtered to `ismanaged eq false`, matched `friendlyname == "The Dataverse Solution"` (uniquename: `TheDataverseSolution`, version 1.0.0.5). Queried `solutioncomponent` where `_solutionid_value eq ... and componenttype eq 1` to get 8 entity components: `account`, `contact`, `tdvsp_actionitem`, `tdvsp_hva`, `tdvsp_idea`, `tdvsp_impact`, `tdvsp_meetingsummary`, `tdvsp_project`. For each `tdvsp_*` table, pulled all `Attributes` and filtered client-side (Dataverse rejects `$filter startswith` on MetadataEntities with `501`). Wrote `solution-tables.json`.
+
+4. **Drafting descriptions** — Ran a parallel Explore subagent over `src/` to ground the descriptions in actual app usage. The agent mapped each table to its React components, hooks, choice values, and lookup patterns (e.g., `tdvsp_priority` = 468510002 Top Priority / 468510003 High / 468510001 Medium / 468510000 Low). Authored rich multi-sentence descriptions for all 8 tables (overriding the stock `account` / `contact` OOB descriptions with app-specific ones at user's request) and 35 `tdvsp_*` custom columns — skipping auto-generated `*name` / `*yominame` / `*id` / virtual columns. Saved as `descriptions-plan.json`.
+
+5. **Metadata PUT loop** (`scripts/apply-descriptions.py`) — First attempt used `PATCH EntityDefinition(...)` and got `405 Operation not supported on EntityMetadata`. Second attempt switched to `PUT .../Description` and got `400 Argument must be of type...`. Microsoft Learn confirmed: metadata endpoints mirror the .NET SDK's `UpdateEntityRequest` / `UpdateAttributeRequest` — *you can't update individual properties*. The working pattern is **read-modify-write PUT**:
+   - GET the full entity (`EntityDefinitions(LogicalName='x')`)
+   - For attributes, GET with a concrete type cast (`.../Attributes({id})/Microsoft.Dynamics.CRM.StringAttributeMetadata`, `MemoAttributeMetadata`, `LookupAttributeMetadata`, `PicklistAttributeMetadata`, `BooleanAttributeMetadata`, `DateTimeAttributeMetadata`)
+   - Mutate `Description` in the returned JSON
+   - PUT the whole thing back with headers `MSCRM.MergeLabels: true` + `MSCRM.SolutionName: TheDataverseSolution`
+   - Call `POST /PublishAllXml` once all writes succeed
+   - Third attempt: **8 tables + 35 columns updated, 0 failures, customizations published**.
+
+6. **Solution pull** — Per the plugin's mandatory post-change step, exported the unmanaged solution and unpacked it into `./solutions/TheDataverseSolution/` so the XML is the source of truth:
+   ```bash
+   pac solution export --name TheDataverseSolution --path ./solutions/TheDataverseSolution.zip --managed false --overwrite
+   pac solution unpack --zipfile ./solutions/TheDataverseSolution.zip --folder ./solutions/TheDataverseSolution --allowDelete --allowWrite
+   rm ./solutions/TheDataverseSolution.zip
+   ```
+   Verified the new `<Descriptions>` blocks appear in `Entities/tdvsp_ActionItem/Entity.xml` (and the others).
+
+**Commit:** `feat: add agent-friendly descriptions to Dataverse tables/columns` — 106 files, includes `scripts/`, `descriptions-plan.json`, `solution-tables.json`, and the full unpacked `solutions/TheDataverseSolution/`. Also added `scripts/__pycache__/` to `.gitignore`.
+
+**Files changed/added:**
+- `.env` (local only, gitignored)
+- `.gitignore` (added `scripts/__pycache__/`)
+- `scripts/auth.py`, `scripts/enable-mcp-client.py`, `scripts/list-solution-tables.py`, `scripts/apply-descriptions.py`
+- `descriptions-plan.json`, `solution-tables.json`
+- `solutions/TheDataverseSolution/**` (unpacked unmanaged solution)
+
+**Key lessons:**
+- Dataverse metadata writes **require read-modify-write PUT**, not PATCH and not per-property PUT. The endpoint expects the entire entity body on every call.
+- US Gov Cloud Dataverse (`crm9`) uses `login.microsoftonline.us`, not the default `login.microsoftonline.com`. Azure Identity `DeviceCodeCredential` needs `authority=AzureAuthorityHosts.AZURE_GOVERNMENT` — but only on first login, because once an `AuthenticationRecord` is persisted it encodes its own authority and passing the kwarg again is a `TypeError`.
+- For attribute metadata, the GET URL **must** include a concrete type cast (`.../Microsoft.Dynamics.CRM.StringAttributeMetadata`, etc.) or the response strips all type-specific properties and the round-trip PUT returns `400`.
+- The Dataverse `$filter` on MetadataEntities doesn't support `startswith` — filter client-side.
+- After any metadata change, pull the solution into the repo. The unpacked XML is the audit trail for what the Copilot Studio agent actually sees.
+
 ## Presentation Materials — Slide Outline & Live Demo Script
 
 **Prompt:** Create a slide outline and live demo script for the Code Apps tech series presentation targeting SLED customers.

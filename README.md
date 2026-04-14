@@ -71,11 +71,15 @@ src/
   stores/             # Zustand stores (quick create)
   hooks/              # TanStack Query hooks wrapping Dataverse services + view preference
   lib/                # Utilities (cn helper, Dataverse field helpers, Azure OpenAI service, tile color helpers incl. tileGradient() with dark mode support)
+scripts/              # Python tooling for Dataverse metadata + seed data (auth.py, list-solution-tables.py, apply-descriptions.py, seed-data.ps1)
+solutions/            # Unpacked TheDataverseSolution XML — source of truth for tables, columns, relationships, forms, views
 docs/                 # Tracked notes, research, slide outline, demo script
 demo-materials/       # Presentation deck (.pptx), talk track (.pdf), generator script (.py)
 inbox/                # Raw artifacts (browser DevTools HTML export of deployed app runtime)
 .power/               # Power Platform schemas (auto-generated)
 power.config.json     # Code App configuration
+descriptions-plan.json # Draft descriptions consumed by scripts/apply-descriptions.py
+solution-tables.json   # Discovered entity + column metadata snapshot
 ```
 
 ## Key Commands
@@ -131,6 +135,26 @@ The `region` field in `power.config.json` must match one of the values in the PA
 | `dod` | `https://play.apps.appsplatform.us` |
 
 Using an incorrect value (e.g., `"gcc"` or `"usgov"`) maps to `undefined` and causes a DNS lookup failure: `getaddrinfo ENOTFOUND undefined`.
+
+## Dataverse Schema & Descriptions
+
+Every table and every `tdvsp_*` custom column in `TheDataverseSolution` has a rich, agent-friendly Description populated via the Dataverse Web API. The descriptions are designed to be discoverable by a Copilot Studio agent calling the Dataverse MCP server: they mention synonyms ("task", "customer", "idea backlog", etc.), explain choice-field numeric keys inline (e.g. `468510002 = Top Priority`), and spell out lookup targets.
+
+| Script | What it does |
+|--------|--------------|
+| `scripts/auth.py` | Azure Identity token / credential helper. **US Gov Cloud aware** — detects `crm9` in `DATAVERSE_URL` and uses `AzureAuthorityHosts.AZURE_GOVERNMENT` (`login.microsoftonline.us`). Persists a separate `dataverse_cli_auth_record_gov.json` so the auth record doesn't collide with commercial-cloud records on the same machine |
+| `scripts/list-solution-tables.py` | Discovers `TheDataverseSolution`, enumerates its entity components, and pulls every `tdvsp_` attribute's MetadataId + current description. Writes `solution-tables.json` |
+| `scripts/apply-descriptions.py` | Reads `descriptions-plan.json`, does read-modify-write PUT on each `EntityDefinition` and typed `AttributeMetadata` resource (Dataverse metadata rejects PATCH), then publishes via `PublishAllXml`. Uses `MSCRM.MergeLabels: true` + `MSCRM.SolutionName: TheDataverseSolution` so the change lands in the unmanaged solution |
+
+After any metadata change, the solution is exported + unpacked into `./solutions/TheDataverseSolution/` so the repo is the source of truth:
+
+```bash
+pac solution export --name TheDataverseSolution --path ./solutions/TheDataverseSolution.zip --managed false --overwrite
+pac solution unpack --zipfile ./solutions/TheDataverseSolution.zip --folder ./solutions/TheDataverseSolution --allowDelete --allowWrite
+rm ./solutions/TheDataverseSolution.zip
+```
+
+To edit a description, update `descriptions-plan.json` and re-run `python scripts/apply-descriptions.py`.
 
 ## Seed Data
 

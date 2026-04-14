@@ -190,3 +190,23 @@ The file `inbox/08587a10-83ed-43d0-8be4-8b145f5a7ee3.devtools` is an HTML export
 ## What does the "Under the Hood" deck cover?
 
 Six slides: (1) Title, (2) Runtime analysis from the DevTools export, (3) Two gotcha stories — Dataverse polymorphic lookups and Copilot Studio auth in Code Apps, (4) 18-phase agentic build with Claude Code, (5) Reusable patterns (TanStack Query cache, Zustand, dnd-kit + Dataverse, Tailwind v4 dark mode), (6) Live demo transition with 7 beats.
+
+## Why do the Dataverse tables have such long descriptions?
+
+Every table and `tdvsp_*` column in `TheDataverseSolution` has a rich, intent-oriented Description specifically written so a Copilot Studio agent using the Dataverse MCP server tool can discover them by natural language. Descriptions list synonyms ("task", "to-do", "follow-up"), call out relationships ("every action item belongs to one customer via `_tdvsp_customer_value`"), and spell out choice-field numeric keys inline (`468510002 = Top Priority`). The goal is that a user asking "show me all tasks due today for Contoso" gives the agent enough signal to pick `tdvsp_actionitem` and filter correctly without needing field-level prompt engineering.
+
+## How do I update a table or column description?
+
+Edit `descriptions-plan.json` in the repo root, then run `python scripts/apply-descriptions.py`. It does read-modify-write via the Web API, publishes customizations, and you should then re-export + unpack the solution to keep `./solutions/TheDataverseSolution/` in sync (see README).
+
+## Why doesn't `PATCH EntityDefinition(...)` work for metadata updates?
+
+Dataverse metadata endpoints mirror the .NET SDK's `UpdateEntityRequest` / `UpdateAttributeRequest`, which replace the entire object. `PATCH` returns `405 Operation not supported on EntityMetadata`, and a per-property PUT like `PUT .../Description` returns `400 Argument must be of type...` because the endpoint expects a full entity body. The working pattern is: GET the full object (for attributes, with a concrete type cast in the URL like `/Attributes({id})/Microsoft.Dynamics.CRM.StringAttributeMetadata`), mutate the field you want to change, and PUT the whole thing back with headers `MSCRM.MergeLabels: true` and `MSCRM.SolutionName: <UniqueName>`. This is exactly what `scripts/apply-descriptions.py` does.
+
+## Why does `scripts/auth.py` have a separate auth-record file for Gov Cloud?
+
+The og-code environment is US Gov Cloud (`crm9.dynamics.com`) — it authenticates against `login.microsoftonline.us`, not the default `login.microsoftonline.com`. The stock plugin `auth.py` from the `dataverse` skill plugin targets the commercial cloud, and its persisted `AuthenticationRecord` encodes the authority. If you share one record file between a commercial tenant and a Gov tenant, `DeviceCodeCredential` refuses to start (`got multiple values for keyword argument 'authority'`). The patched `auth.py` in this repo auto-detects Gov from the `DATAVERSE_URL`, sets `AzureAuthorityHosts.AZURE_GOVERNMENT`, and writes its record to `dataverse_cli_auth_record_gov.json` so it coexists with commercial-cloud auth records for other projects. Don't overwrite `scripts/auth.py` with the vanilla plugin version without re-applying the Gov patches.
+
+## I see GCC Power Platform uses commercial Azure AD — why does Dataverse here use Gov?
+
+That FAQ entry above ("Does GCC Power Platform use Azure Government?") was written when the app was pointed at a commercial-cloud GCC tenant via `az login`. This repo now targets a genuine **US Gov L4 / GCC High**-style environment at `https://og-code.crm9.dynamics.com/`, and the Python SDK path through `scripts/auth.py` does use the Gov authority. The commercial-Azure note still applies to the PAC CLI flow and to the seed-data PowerShell script. If you're confused about which authority applies, ask: *"am I authing as PAC CLI (commercial) or as the Python SDK (Gov)?"*
