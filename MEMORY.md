@@ -62,6 +62,23 @@ export PATH="/c/Users/pogorman/AppData/Local/nvm/v22.22.0:$PATH"
 
 Prepend it directly; don't try `nvm use`.
 
+## Copilot Studio connector (`shared_microsoftcopilotstudio`) is blocked in `og-code`
+
+**Do not try to add the Copilot Studio data source to this Code App.** The native upgrade path from the Phase 12 popup-window integration — `pac code add-data-source -a shared_microsoftcopilotstudio -c <id>` with the generated `MicrosoftCopilotStudioService.ExecuteCopilotAsyncV2()` client — requires a `shared_microsoftcopilotstudio` connection, and creating one from the `make.gov.powerautomate.us` maker portal fails in GCC with:
+
+> **AADSTS700030: Invalid certificate - the issuer of the certificate is from a different cloud instance.** (First Party OAuth2 Certificate flow, error `invalid_client`)
+
+The connector card ships globally but the backend First Party AAD identity is presenting a commercial-cloud-issued certificate to GCC Entra ID. There is no user-side config fix and **no CLI fallback** — `pac connection create` is Dataverse-only (SP auth, `--application-id` / `--client-secret`), and Microsoft Learn states the connection "must be created through the Power Apps maker portal UI." This is a Microsoft-side provisioning gap in GCC.
+
+**If you need the evidence for a support ticket**, the failing screenshot is in `inbox/copilot-studio-connection-bug-in-gcc.png`. Correlation ID `f6f4fc79-9b04-4e82-8a94-7769d34158e2`, trace ID `b8e3d367-4a88-4a21-bd26-1ff362397000` — though a fresh repro will give newer IDs.
+
+**What to use instead:**
+
+1. **The existing Phase 12 popup-window integration** (`src/components/copilot-chat.tsx`) still works. It opens the native Copilot Studio webchat URL in a new browser window so the agent authenticates itself. No connector required. This is the default for the demo.
+2. **If a deeper in-app chat is required**, fall back to a Power Automate detour: Code App → flow → "Send a message to Copilot Studio agent" action. Power Automate's GCC runtime handles its own token flow and sidesteps the broken connector.
+
+Details in `FAQ.md` → "Why not use the Microsoft Copilot Studio connector…" and `HOW-I-WAS-BUILT.md` → Phase 23.
+
 ## After any metadata change, pull the solution
 
 Per the `dataverse` skill plugin's mandatory post-change step:

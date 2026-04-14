@@ -207,6 +207,28 @@ Dataverse metadata endpoints mirror the .NET SDK's `UpdateEntityRequest` / `Upda
 
 The og-code environment is US Gov Cloud (`crm9.dynamics.com`) — it authenticates against `login.microsoftonline.us`, not the default `login.microsoftonline.com`. The stock plugin `auth.py` from the `dataverse` skill plugin targets the commercial cloud, and its persisted `AuthenticationRecord` encodes the authority. If you share one record file between a commercial tenant and a Gov tenant, `DeviceCodeCredential` refuses to start (`got multiple values for keyword argument 'authority'`). The patched `auth.py` in this repo auto-detects Gov from the `DATAVERSE_URL`, sets `AzureAuthorityHosts.AZURE_GOVERNMENT`, and writes its record to `dataverse_cli_auth_record_gov.json` so it coexists with commercial-cloud auth records for other projects. Don't overwrite `scripts/auth.py` with the vanilla plugin version without re-applying the Gov patches.
 
+## Why not use the Microsoft Copilot Studio connector for the agent integration?
+
+Because it is **broken in GCC** as of 2026-04-13. The "native" Code App → Copilot Studio integration pattern (Microsoft Learn: *How to: Connect your code app to Microsoft Copilot Studio agents*) has you run:
+
+```bash
+pac code add-data-source -a "shared_microsoftcopilotstudio" -c <connectionId>
+```
+
+which generates a typed `MicrosoftCopilotStudioService.ExecuteCopilotAsyncV2()` client you can call from React. It would be a cleaner upgrade from this app's current popup-window integration — the chat UI could live fully inside the app, multi-turn would round-trip via `conversationId`, and auth would inherit from the Code App host.
+
+**The blocker:** creating a `shared_microsoftcopilotstudio` connection in the GCC maker portal (`make.gov.powerautomate.us`) fails with:
+
+> **AADSTS700030: Invalid certificate - the issuer of the certificate is from a different cloud instance.** (First Party OAuth2 Certificate flow, `invalid_client`)
+
+The connector card is published globally — it appears in the Gov portal — but its backend First Party AAD identity is presenting a commercial-cloud-issued certificate to GCC Entra ID, which Gov rejects because the cert was issued by a different cloud authority. Microsoft Learn's Code App → Copilot Studio article has no GCC section at all and all its URL examples use the commercial `{id}.environment.api.powerplatform.com` hostname — a hint that the integration path was never certified for Gov.
+
+**There is no CLI escape hatch.** `pac connection create` is Dataverse-only (service-principal auth, `--application-id` / `--client-secret` — no `--api-id` parameter for generic connectors), `pac code` has no `connection create` subcommand, and Microsoft Learn explicitly states the connection "must be created through the Power Apps maker portal UI." Any client hitting the same backend would hit the same OAuth2 Certificate flow and the same `AADSTS700030`.
+
+**What we use instead:** the Phase 12 popup-window pattern (`src/components/copilot-chat.tsx`) — a floating button that opens the native Copilot Studio webchat URL via `window.open`. The agent handles its own auth natively, so no connector is required. If a deeper in-app chat is ever needed before Microsoft ships a GCC fix, the fallback is a Power Automate detour (Code App → flow → "Send a message to Copilot Studio agent"), since Power Automate's GCC runtime handles token acquisition differently and sidesteps the broken connector.
+
+See `MEMORY.md` → "Copilot Studio connector is blocked in og-code" and `HOW-I-WAS-BUILT.md` → Phase 23 for the full investigation. Screenshot of the failing connection dialog is in `inbox/copilot-studio-connection-bug-in-gcc.png`.
+
 ## I see GCC Power Platform uses commercial Azure AD — why does Dataverse here use Gov?
 
 That FAQ entry above ("Does GCC Power Platform use Azure Government?") was written when the app was pointed at a commercial-cloud GCC tenant via `az login`. This repo now targets a genuine **US Gov L4 / GCC High**-style environment at `https://og-code.crm9.dynamics.com/`, and the Python SDK path through `scripts/auth.py` does use the Gov authority. The commercial-Azure note still applies to the PAC CLI flow and to the seed-data PowerShell script. If you're confused about which authority applies, ask: *"am I authing as PAC CLI (commercial) or as the Python SDK (Gov)?"*

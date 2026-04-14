@@ -516,6 +516,42 @@ All changes in `src/components/layout/app-layout.tsx`.
 - The Dataverse `$filter` on MetadataEntities doesn't support `startswith` — filter client-side.
 - After any metadata change, pull the solution into the repo. The unpacked XML is the audit trail for what the Copilot Studio agent actually sees.
 
+## Phase 23 — Copilot Studio Connector Upgrade Attempt (Blocked in GCC)
+
+**Prompt:** "read \inbox\copilot-studio-integration.txt and provide your thoughts on moving forward w an agent i have in the same power platform environment as our app."
+
+**Why:** Phase 12 shipped a popup-window integration against the native Copilot Studio webchat URL — it works and is still the current demo pattern. A note in `inbox/copilot-studio-integration.txt` proposed an upgrade: drop the popup and use the native Code Apps → Copilot Studio **connector** (`shared_microsoftcopilotstudio`) with `pac code add-data-source` generating a typed `MicrosoftCopilotStudioService.ExecuteCopilotAsyncV2()` client, so the chat UI could live fully inside the React app. Cleaner architecture, multi-turn via `conversationId`, end-user Entra context inherited from the Code App host. Worth investigating before spending time on a chat panel component.
+
+**What happened:**
+
+1. **Grounded the proposal in Microsoft Learn.** Pulled `/power-apps/developer/code-apps/how-to/connect-to-copilot-studio` and `/microsoft-copilot-studio/requirements-licensing-gcc`. Copilot Studio itself is supported in GCC, at the dedicated endpoints `gcc.powerva.microsoft.us` and `gcc.api.powerva.microsoft.us`. **But the Code App → Copilot Studio integration article has no GCC section** — its only agent URL example is `{id}.environment.api.powerplatform.com`, the commercial hostname. First red flag: the supported path was documented against commercial only.
+
+2. **User tried to create the connection in the GCC maker portal.** Connector card appeared in the UI at `make.gov.powerautomate.us` → Connections → New → Microsoft Copilot Studio. Clicking Create surfaced a red banner error (screenshot saved to `inbox/copilot-studio-connection-bug-in-gcc.png`):
+
+   > **OAuth2Certificate Authorization Flow failed for service First Party Azure Active Directory. Failed to acquire token from AAD:** `{"error":"invalid_client","error_description":"AADSTS700030: Invalid certificate - the issuer of the certificate is from a different cloud instance...}`
+   > Correlation ID: `f6f4fc79-9b04-4e82-8a94-7769d34158e2`
+   > Trace ID: `b8e3d367-4a88-4a21-bd26-1ff362397000`
+
+   Translation: the connector's backend First Party OAuth2 Certificate flow is presenting a **commercial-cloud-issued certificate** to **GCC Entra ID**, and Gov AAD rejects it because the issuer is from a different cloud authority. The connector card is published globally but the identity plumbing for GCC isn't wired up — or the runtime hard-codes the commercial cert issuer.
+
+3. **Checked for a CLI fallback.** Ran `pac org who` (confirmed `og-code`), then `pac connection help`, `pac connection create help`, `pac connection list`, and `pac code help`. Findings:
+   - `pac connection create` is Dataverse-only and service-principal-only (`--application-id` / `--client-secret`). No `--api-id` parameter for generic connectors.
+   - `pac code` has no `connection create` subcommand — it only adds/removes data sources on existing connections.
+   - `pac connection list` in `og-code` showed only the Dataverse connection (`shared_commondataserviceforapps`). No stale Copilot Studio connection hiding.
+   - Microsoft Learn explicitly states: *"you must create one through the Power Apps maker portal UI."* The UI **is** the supported client. There's no sanctioned non-UI path to get around it.
+
+   So the UI being broken isn't a UI-layer bug scenario where a different client could slip through. Any client hitting the same backend OAuth2 Certificate flow would hit the same `AADSTS700030`.
+
+4. **Decision:** Leave the Phase 12 popup-window integration in place. It works today, it doesn't depend on the blocked connector, and it preserves the low-code-first narrative for the demo. Raise a Microsoft support ticket with the correlation ID / trace ID so the connector team can fix the GCC identity provisioning. If a deeper in-app chat experience is needed before that fix ships, fall back to a Power Automate detour: Code App → flow → Copilot Studio agent (Power Automate's GCC runtime handles its own token acquisition and sidesteps the broken connector entirely).
+
+**Files changed:** none in the app. Documentation updates to `MEMORY.md`, `FAQ.md`, `ARCHITECTURE.md`, `HOW-I-WAS-BUILT.md`, and an auto-memory project file.
+
+**Key lessons:**
+- **Connector availability in the GCC maker portal is not the same as connector functionality.** The card is surfaced globally because the swagger is published globally — but the backend First Party AAD identity plumbing has to be provisioned separately for Gov, and for `shared_microsoftcopilotstudio` it isn't.
+- **The AADSTS700030 "different cloud instance" error is the signature** for this class of bug. If you see it on any First Party OAuth2 Certificate flow from a Gov portal, stop debugging your tenant config and go file a ticket — it's almost always a Microsoft-side provisioning gap.
+- **Microsoft Learn's silence is a signal.** When the Code App → connector integration article has no GCC section and its URL examples are all commercial, the integration probably hasn't been certified for Gov yet. Don't assume parity.
+- **PAC CLI's `pac connection create` is narrow by design** — Dataverse connections, SP auth only. Not a general-purpose "create any connection from the CLI" tool.
+
 ## Presentation Materials — Slide Outline & Live Demo Script
 
 **Prompt:** Create a slide outline and live demo script for the Code Apps tech series presentation targeting SLED customers.
