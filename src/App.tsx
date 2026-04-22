@@ -10,6 +10,7 @@ import { IdeaList } from "@/components/ideas";
 import { ProjectList } from "@/components/projects";
 import { Dashboard, BoardDashboard } from "@/components/dashboard";
 import { CommandPalette } from "@/components/command-palette";
+import { CopilotChatPanel } from "@/components/copilot-chat-panel";
 import { ThemeProvider } from "@/components/theme-provider";
 
 const queryClient = new QueryClient({
@@ -40,6 +41,7 @@ export function App() {
           </Routes>
         </AppLayout>
         <CommandPalette />
+        <CopilotChatPanel />
       </HashRouter>
       <Toaster richColors position="bottom-right" />
     </QueryClientProvider>

@@ -8,7 +8,16 @@
   "logoPath": "Default",
   "localAppUrl": "http://localhost:3001/",
   "region": "gccmoderate",
-  "connectionReferences": {},
+  "connectionReferences": {
+    "67f6f6ec-055d-46d9-84ca-d6b896adfcc2": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_microsoftcopilotstudio",
+      "displayName": "Microsoft Copilot Studio",
+      "dataSources": [
+        "microsoftcopilotstudio"
+      ],
+      "dataSets": {}
+    }
+  },
   "databaseReferences": {
     "default.cds": {
       "databaseDetails": null,
