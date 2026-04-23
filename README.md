@@ -189,6 +189,14 @@ python generate-deck.py
 
 The `inbox/` folder at the project root contains a browser DevTools HTML export (`08587a10-83ed-43d0-8be4-8b145f5a7ee3.devtools`) of the deployed Code App runtime — used as source material for the "What's Actually Running" slide.
 
-## Action Item Type Filters
+## Action Items List View
 
-The action items list view includes pill-style filter buttons (All / Work / Personal / Learning) in the toolbar. Filters are client-side on the `tdvsp_tasktype` field. Each action item row and card shows an inline type icon (Briefcase, House, or BookOpen) color-coded to match. The Customer column was removed from the table view in favor of the type icon.
+The action items list (Phase 27) uses the `--dash-*` Stripe/Retool design system — table-only, no card view.
+
+- **Toolbar:** Icon tile + eyebrow + h1, search input with `/` kbd hint, Export (visual-only), "New Action Item" primary button
+- **Saved-view tabs:** All, Overdue (red count pill), High priority, Due this week — counts computed client-side
+- **Subtoolbar:** Group by Account toggle, Type/Priority/Status dropdown filter pills, "Add filter" (visual-only), Compact/Rich density toggle (persisted to localStorage), item count
+- **Table:** Sortable columns (Name, Priority, Status, Due, Updated, Actions). 3px priority rail, 18×18 type-icon tile, priority/status pills, due date + overdue/soon badge, relative time + activity dot, hover edit/delete actions
+- **Group by Account:** Collapsible group headers with 2-letter colored avatar, count pill, mini status distribution bar, "N open · M overdue" text
+- **Bulk actions:** Row selection with floating bottom bar (Framer Motion animated): Mark complete (fires confetti), Delete, clear
+- **Density:** Compact mode hides description meta-line and shrinks row height

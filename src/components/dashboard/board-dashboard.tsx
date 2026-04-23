@@ -7,19 +7,16 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  useDroppable,
   type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
 } from "@dnd-kit/core";
 import {
-  SortableContext,
-  verticalListSortingStrategy,
   useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useActionItems, useUpdateActionItem } from "@/hooks/use-action-items";
+import { useActionItems, useCreateActionItem, useUpdateActionItem } from "@/hooks/use-action-items";
 import { useProjects, useUpdateProject } from "@/hooks/use-projects";
 import { useIdeas, useUpdateIdea } from "@/hooks/use-ideas";
 import {
@@ -30,47 +27,28 @@ import { ActionItemFormDialog } from "@/components/action-items";
 import { IdeaFormDialog } from "@/components/ideas";
 import { MeetingSummaryFormDialog } from "@/components/meeting-summaries";
 import { ProjectFormDialog } from "@/components/projects";
-import { TileColorDots } from "@/components/ui/tile-color-dots";
-import {
-  priorityToColorIndex,
-  tileBgClass,
-  tileGradient,
-  COLOR_TO_PRIORITY,
-} from "@/lib/tile-colors";
-import { cn } from "@/lib/utils";
-import {
-  PRIORITY_LABELS,
-  STATUS_LABELS,
-  TASK_TYPE_LABELS,
-  priorityPillClass,
-  statusPillClass,
-} from "@/components/action-items/labels";
-import { CATEGORY_LABELS, categoryPillClass } from "@/components/ideas/labels";
-
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  BookOpen,
-  Briefcase,
-  Car,
-  Columns3,
-  FileText,
-  FolderKanban,
-  GripVertical,
-  House,
-  LayoutGrid,
-  Lightbulb,
-  Pencil,
-  X,
-} from "lucide-react";
-import type { Tdvsp_actionitemsModel } from "@/generated";
-import type { Tdvsp_ideasModel } from "@/generated";
-import type { Tdvsp_projectsModel } from "@/generated";
-import type { Tdvsp_meetingsummariesModel } from "@/generated";
+import { Columns3 } from "lucide-react";
 
-type ActionItem = Tdvsp_actionitemsModel.Tdvsp_actionitems;
-type Idea = Tdvsp_ideasModel.Tdvsp_ideas;
-type Project = Tdvsp_projectsModel.Tdvsp_projects;
-type MeetingSummary = Tdvsp_meetingsummariesModel.Tdvsp_meetingsummaries;
+import {
+  COLUMN_COLORS,
+  COLUMN_ICONS,
+  STATUS_COMPLETE,
+  STATUS_RECOGNIZED,
+  PRIORITY_MED,
+  TASK_TYPE_WORK,
+  WORK_FILTERS,
+  workFilterConfig,
+  type EditTarget,
+  type ParkingLotEntry,
+  type CardConfig,
+  type ActionItem,
+  type Idea,
+  type Project,
+} from "./board-tokens";
+import { BoardToolbar } from "./board-toolbar";
+import { BoardCard, ParkingLotCard } from "./board-card";
+import { BoardColumn } from "./board-column";
 
 /* ── helpers ──────────────────────────────────────────────────── */
 
@@ -78,75 +56,6 @@ function isItemPinned(item: unknown): boolean {
   const val = (item as Record<string, unknown>).tdvsp_pinned;
   return val === true || val === 1;
 }
-
-/* ── status keys ──────────────────────────────────────────────── */
-
-const COMPLETE = 468510005;
-const TASK_TYPE_PERSONAL = 468510000;
-const TASK_TYPE_WORK = 468510001;
-const TASK_TYPE_LEARNING = 468510002;
-
-const WORK_FILTERS = [
-  { key: TASK_TYPE_WORK, letter: "W", label: "Work", accent: "#ef4444", icon: Briefcase },
-  { key: TASK_TYPE_PERSONAL, letter: "P", label: "Personal", accent: "#3b82f6", icon: House },
-  { key: TASK_TYPE_LEARNING, letter: "L", label: "Learning", accent: "#d946ef", icon: BookOpen },
-] as const;
-
-const WORK_ALL_ACCENT = "#6b7280";
-const WORK_ALL_ICON = LayoutGrid;
-
-function workFilterConfig(filter: number | null) {
-  const match = WORK_FILTERS.find((f) => f.key === filter);
-  return {
-    accent: match?.accent ?? WORK_ALL_ACCENT,
-    icon: match?.icon ?? WORK_ALL_ICON,
-    title: match?.label.toLowerCase() ?? "all",
-  };
-}
-
-/* ── column accent colours ────────────────────────────────────── */
-
-const ACCENT = {
-  parkingLot: "#22c55e",
-  projects: "#8b5cf6",
-  ideas: "#EF9F27",
-} as const;
-
-/* ── motion (subtle entrance) ─────────────────────────────────── */
-
-const MOTION_RISE = {
-  initial: { opacity: 0, y: 14 },
-  animate: { opacity: 1, y: 0 },
-} as const;
-
-const MOTION_TRANSITION = {
-  duration: 0.45,
-  ease: [0.16, 1, 0.3, 1] as const,
-};
-
-const CARD_MOTION = {
-  initial: { opacity: 0, y: 6 },
-  animate: { opacity: 1, y: 0 },
-} as const;
-
-const CARD_TRANSITION = {
-  duration: 0.32,
-  ease: [0.16, 1, 0.3, 1] as const,
-};
-
-/* ── glassmorphism tokens for columns/cards ───────────────────── */
-
-const GLASS_COLUMN =
-  "bg-gradient-to-b from-white/55 via-white/35 to-white/25 " +
-  "dark:from-white/[0.045] dark:via-white/[0.02] dark:to-white/[0.01] " +
-  "backdrop-blur-xl " +
-  "shadow-[0_1px_0_0_rgba(255,255,255,0.35)_inset,0_8px_32px_-12px_rgba(15,23,42,0.12)] " +
-  "dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_8px_32px_-12px_rgba(0,0,0,0.5)]";
-
-const GLASS_CARD_SURFACE =
-  "backdrop-blur-md " +
-  "shadow-[0_1px_0_0_rgba(255,255,255,0.35)_inset,0_4px_12px_-4px_rgba(15,23,42,0.1)] " +
-  "dark:shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_4px_16px_-4px_rgba(0,0,0,0.5)]";
 
 /* ── localStorage sort order helpers ─────────────────────────── */
 
@@ -181,14 +90,24 @@ function applyOrder<T>(items: T[], getId: (item: T) => string, savedOrder: strin
   return sorted;
 }
 
-/* ── drag handle props ───────────────────────────────────────── */
+/* ── drag handle types ───────────────────────────────────────── */
 
 type DragHandleProps = {
   attributes: ReturnType<typeof useSortable>["attributes"];
   listeners: ReturnType<typeof useSortable>["listeners"];
 };
 
-/* ── sortable card wrapper (render-prop for drag handle) ─────── */
+/* ── sortable card wrapper ───────────────────────────────────── */
+
+const CARD_MOTION = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0 },
+} as const;
+
+const CARD_TRANSITION = {
+  duration: 0.32,
+  ease: [0.16, 1, 0.3, 1] as const,
+};
 
 function SortableCard({
   id,
@@ -211,23 +130,24 @@ function SortableCard({
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    ...(isDragging ? { position: "relative" as const, zIndex: 9999 } : {}),
+    ...(isDragging
+      ? {
+          position: "relative" as const,
+          zIndex: 9999,
+          rotate: "-1.2deg",
+          boxShadow: "var(--dash-shadow-drag)",
+          borderColor: "var(--dash-violet)",
+          borderWidth: "2px",
+          borderStyle: "solid",
+          borderRadius: "8px",
+        }
+      : {}),
   };
 
-  /* Cap stagger so long lists don't have a long tail */
   const staggerDelay = Math.min(index, 12) * 0.035;
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "group transition-all duration-200",
-        isDragging
-          ? "opacity-95 scale-[1.02] rotate-[1deg] ring-2 ring-primary/30 rounded-lg shadow-2xl"
-          : "hover:-translate-y-0.5",
-      )}
-    >
+    <div ref={setNodeRef} style={style}>
       <motion.div
         initial={CARD_MOTION.initial}
         animate={CARD_MOTION.animate}
@@ -239,479 +159,69 @@ function SortableCard({
   );
 }
 
-/* ── floating card toolbar ───────────────────────────────────── */
+/* ── card config builders ────────────────────────────────────── */
 
-function CardToolbar({
-  colorIdx,
-  onPriorityChange,
-  pinned,
-  onPinToggle,
-  onEdit,
-  dragHandle,
-}: {
-  colorIdx: number;
-  onPriorityChange: (idx: number) => void;
-  pinned: boolean;
-  onPinToggle: () => void;
-  onEdit?: () => void;
-  dragHandle: DragHandleProps;
-}) {
-  return (
-    <div
-      className={cn(
-        "absolute -top-2.5 -right-2.5 z-10 flex items-center gap-1.5",
-        "rounded-lg border border-border/50 bg-popover/90 backdrop-blur-xl px-2 py-1",
-        "shadow-lg shadow-black/8 dark:shadow-black/25 opacity-0 group-hover:opacity-100 transition-all duration-200",
-      )}
-      onClick={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-    >
-      {/* drag grip */}
-      <div
-        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
-        {...dragHandle.attributes}
-        {...dragHandle.listeners}
-      >
-        <GripVertical className="h-4 w-4" />
-      </div>
-
-      {/* priority color dots */}
-      <TileColorDots
-        activeIndex={colorIdx}
-        onChange={onPriorityChange}
-        className="!opacity-100"
-      />
-
-      {/* separator */}
-      <div className="h-4 w-px bg-border/50 shrink-0" />
-
-      {/* edit */}
-      {onEdit && (
-        <button
-          type="button"
-          title="Edit"
-          className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </button>
-      )}
-
-      {/* park / unpark */}
-      <button
-        type="button"
-        title={pinned ? "Remove from parking lot" : "Park this item"}
-        className={cn(
-          "shrink-0 transition-colors",
-          pinned
-            ? "text-green-500 hover:text-green-400"
-            : "text-muted-foreground hover:text-foreground",
-        )}
-        onClick={(e) => {
-          e.stopPropagation();
-          onPinToggle();
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <Car className="h-3.5 w-3.5" />
-      </button>
-    </div>
-  );
+function toActionItemConfig(
+  item: ActionItem,
+  onEdit: () => void,
+  onPinToggle: () => void,
+): CardConfig {
+  return {
+    id: item.tdvsp_actionitemid,
+    kind: "action-item",
+    title: item.tdvsp_name,
+    description: item.tdvsp_description ?? undefined,
+    priority: item.tdvsp_priority ?? undefined,
+    status: item.tdvsp_taskstatus ?? undefined,
+    taskType: item.tdvsp_tasktype ?? undefined,
+    date: item.tdvsp_date ?? undefined,
+    customerName: item.tdvsp_customername ?? undefined,
+    modifiedOn: (item as unknown as Record<string, string>).modifiedon ?? undefined,
+    isPinned: isItemPinned(item),
+    onEdit,
+    onPinToggle,
+  };
 }
 
-/* ── action-item card ─────────────────────────────────────────── */
-
-function ActionItemCard({
-  item,
-  showStatus,
-  onPriorityChange,
-  onPinToggle,
-  onEdit,
-  dragHandle,
-}: {
-  item: ActionItem;
-  showStatus: boolean;
-  onPriorityChange: (id: string, priority: number | null) => void;
-  onPinToggle: (id: string) => void;
-  onEdit: (item: ActionItem) => void;
-  dragHandle: DragHandleProps;
-}) {
-  const date = item.tdvsp_date
-    ? new Date(item.tdvsp_date).toLocaleDateString()
-    : null;
-  const customer = item.tdvsp_customername;
-  const priority =
-    item.tdvsp_priority != null
-      ? PRIORITY_LABELS[item.tdvsp_priority]
-      : null;
-  const status =
-    item.tdvsp_taskstatus != null
-      ? STATUS_LABELS[item.tdvsp_taskstatus]
-      : null;
-  const colorIdx = priorityToColorIndex(item.tdvsp_priority);
-  const pinned = isItemPinned(item);
-
-  const description = item.tdvsp_description;
-
-  return (
-    <div
-      className={cn(
-        "relative rounded-lg border border-white/40 dark:border-white/[0.06] bg-card/70 dark:bg-card/40 px-3.5 pt-3 pb-7 cursor-pointer",
-        GLASS_CARD_SURFACE,
-        "hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300",
-        tileBgClass(colorIdx),
-      )}
-      style={{ backgroundImage: tileGradient(colorIdx) }}
-      onClick={() => onEdit(item)}
-    >
-      <CardToolbar
-        colorIdx={colorIdx}
-        onPriorityChange={(idx) => onPriorityChange(item.tdvsp_actionitemid, COLOR_TO_PRIORITY[idx] ?? null)}
-        pinned={pinned}
-        onPinToggle={() => onPinToggle(item.tdvsp_actionitemid)}
-        onEdit={() => onEdit(item)}
-        dragHandle={dragHandle}
-      />
-      <div className="flex items-start gap-1.5">
-        <Briefcase className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/40" />
-        <p className="text-xs font-medium leading-snug line-clamp-2">
-          {item.tdvsp_name}
-        </p>
-      </div>
-      {description && (
-        <p className="mt-1 text-xs text-muted-foreground/70 line-clamp-1 pl-[1.125rem]">
-          {description}
-        </p>
-      )}
-      {(date || customer) && (
-        <div className="mt-1.5 flex items-center gap-2 text-[11px] text-muted-foreground/60 pl-[1.125rem]">
-          {date && <span>{date}</span>}
-          {date && customer && <span>·</span>}
-          {customer && <span className="truncate">{customer}</span>}
-        </div>
-      )}
-      {priority && (
-        <span className={cn("absolute bottom-1.5 left-2 inline-flex items-center rounded-sm border px-1.5 py-px text-[10px] font-semibold", priorityPillClass(item.tdvsp_priority!))}>
-          {priority}
-        </span>
-      )}
-      {showStatus && status && (
-        <span className={cn("absolute bottom-1.5 right-2 inline-flex items-center rounded-sm border px-1.5 py-px text-[10px] font-semibold", statusPillClass(item.tdvsp_taskstatus!))}>
-          {status}
-        </span>
-      )}
-    </div>
-  );
+function toProjectConfig(
+  project: Project,
+  onEdit: () => void,
+  onPinToggle: () => void,
+): CardConfig {
+  return {
+    id: project.tdvsp_projectid,
+    kind: "project",
+    title: project.tdvsp_name,
+    description: project.tdvsp_description ?? undefined,
+    priority: project.tdvsp_priority ?? undefined,
+    modifiedOn: (project as unknown as Record<string, string>).modifiedon ?? undefined,
+    isPinned: isItemPinned(project),
+    onEdit,
+    onPinToggle,
+  };
 }
 
-/* ── project card ─────────────────────────────────────────────── */
-
-function ProjectCard({
-  project,
-  onPriorityChange,
-  onPinToggle,
-  onEdit,
-  dragHandle,
-}: {
-  project: Project;
-  onPriorityChange: (id: string, priority: number | null) => void;
-  onPinToggle: (id: string) => void;
-  onEdit: (project: Project) => void;
-  dragHandle: DragHandleProps;
-}) {
-  const colorIdx = priorityToColorIndex(project.tdvsp_priority);
-  const priority =
-    project.tdvsp_priority != null
-      ? PRIORITY_LABELS[project.tdvsp_priority as keyof typeof PRIORITY_LABELS]
-      : null;
-  const pinned = isItemPinned(project);
-
-  const description = project.tdvsp_description;
-
-  return (
-    <div
-      className={cn(
-        "relative rounded-lg border border-white/40 dark:border-white/[0.06] bg-card/70 dark:bg-card/40 px-3.5 pt-3 pb-7 cursor-pointer",
-        GLASS_CARD_SURFACE,
-        "hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300",
-        tileBgClass(colorIdx),
-      )}
-      style={{ backgroundImage: tileGradient(colorIdx) }}
-      onClick={() => onEdit(project)}
-    >
-      <CardToolbar
-        colorIdx={colorIdx}
-        onPriorityChange={(idx) => onPriorityChange(project.tdvsp_projectid, COLOR_TO_PRIORITY[idx] ?? null)}
-        pinned={pinned}
-        onPinToggle={() => onPinToggle(project.tdvsp_projectid)}
-        onEdit={() => onEdit(project)}
-        dragHandle={dragHandle}
-      />
-      <div className="flex items-start gap-1.5">
-        <FolderKanban className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/40" />
-        <p className="text-xs font-medium leading-snug line-clamp-2">
-          {project.tdvsp_name}
-        </p>
-      </div>
-      {description && (
-        <p className="mt-1 text-xs text-muted-foreground/70 line-clamp-1 pl-[1.125rem]">
-          {description}
-        </p>
-      )}
-      {priority && (
-        <span className={cn("absolute bottom-1.5 left-2 inline-flex items-center rounded-sm border px-1.5 py-px text-[10px] font-semibold", priorityPillClass(project.tdvsp_priority!))}>
-          {priority}
-        </span>
-      )}
-    </div>
-  );
-}
-
-/* ── idea card ────────────────────────────────────────────────── */
-
-function IdeaCard({
-  idea,
-  onPriorityChange,
-  onPinToggle,
-  onEdit,
-  dragHandle,
-}: {
-  idea: Idea;
-  onPriorityChange: (id: string, priority: number | null) => void;
-  onPinToggle: (id: string) => void;
-  onEdit: (idea: Idea) => void;
-  dragHandle: DragHandleProps;
-}) {
-  const category =
-    idea.tdvsp_category != null
-      ? CATEGORY_LABELS[idea.tdvsp_category]
-      : null;
+function toIdeaConfig(
+  idea: Idea,
+  onEdit: () => void,
+  onPinToggle: () => void,
+): CardConfig {
   const priority = (idea as unknown as Record<string, number>).tdvsp_priority;
-  const colorIdx = priorityToColorIndex(priority);
-  const pinned = isItemPinned(idea);
-
-  const description = idea.tdvsp_description;
-
-  return (
-    <div
-      className={cn(
-        "relative rounded-lg border border-white/40 dark:border-white/[0.06] bg-card/70 dark:bg-card/40 px-3.5 pt-3 pb-7 cursor-pointer",
-        GLASS_CARD_SURFACE,
-        "hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300",
-        tileBgClass(colorIdx),
-      )}
-      style={{ backgroundImage: tileGradient(colorIdx) }}
-      onClick={() => onEdit(idea)}
-    >
-      <CardToolbar
-        colorIdx={colorIdx}
-        onPriorityChange={(idx) => onPriorityChange(idea.tdvsp_ideaid, COLOR_TO_PRIORITY[idx] ?? null)}
-        pinned={pinned}
-        onPinToggle={() => onPinToggle(idea.tdvsp_ideaid)}
-        onEdit={() => onEdit(idea)}
-        dragHandle={dragHandle}
-      />
-      <div className="flex items-start gap-1.5">
-        <Lightbulb className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/40" />
-        <p className="text-xs font-medium leading-snug line-clamp-2">
-          {idea.tdvsp_name}
-        </p>
-      </div>
-      {description && (
-        <p className="mt-1 text-xs text-muted-foreground/70 line-clamp-1 pl-[1.125rem]">
-          {description}
-        </p>
-      )}
-      {category && (
-        <span className={cn("absolute bottom-1.5 left-2 inline-flex items-center rounded-sm border px-1.5 py-px text-[10px] font-semibold", categoryPillClass(idea.tdvsp_category!))}>
-          {category}
-        </span>
-      )}
-    </div>
-  );
+  return {
+    id: idea.tdvsp_ideaid,
+    kind: "idea",
+    title: idea.tdvsp_name,
+    description: idea.tdvsp_description ?? undefined,
+    priority: priority ?? undefined,
+    category: idea.tdvsp_category ?? undefined,
+    modifiedOn: (idea as unknown as Record<string, string>).modifiedon ?? undefined,
+    isPinned: isItemPinned(idea),
+    onEdit,
+    onPinToggle,
+  };
 }
 
-/* ── parking-lot card (mixed entity, shows type + X to unpin) ── */
-
-type ParkingLotEntry = {
-  kind: "action-item" | "project" | "idea" | "meeting-summary";
-  id: string;
-  sortId: string;
-  name: string;
-  label: string;
-  colorIdx: number;
-  onUnpin: () => void;
-  onEdit: () => void;
-};
-
-const KIND_ICON: Record<ParkingLotEntry["kind"], typeof Briefcase> = {
-  "action-item": Briefcase,
-  project: FolderKanban,
-  idea: Lightbulb,
-  "meeting-summary": FileText,
-};
-
-function ParkingLotCard({ entry, dragHandle }: { entry: ParkingLotEntry; dragHandle: DragHandleProps }) {
-  const KindIcon = KIND_ICON[entry.kind];
-
-  return (
-    <div
-      className={cn(
-        "relative rounded-lg border border-white/40 dark:border-white/[0.06] bg-card/70 dark:bg-card/40 px-3.5 py-3 cursor-pointer",
-        GLASS_CARD_SURFACE,
-        "hover:shadow-lg dark:hover:shadow-black/40 transition-all duration-300",
-        tileBgClass(entry.colorIdx),
-      )}
-      style={{ backgroundImage: tileGradient(entry.colorIdx) }}
-      onClick={() => entry.onEdit()}
-    >
-      {/* minimal toolbar: grip + unpin */}
-      <div
-        className={cn(
-          "absolute -top-2.5 -right-2.5 z-10 flex items-center gap-1.5",
-          "rounded-lg border border-border/50 bg-popover/90 backdrop-blur-xl px-2 py-1",
-          "shadow-lg shadow-black/8 dark:shadow-black/25 opacity-0 group-hover:opacity-100 transition-all duration-200",
-        )}
-        onClick={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <div
-          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
-          {...dragHandle.attributes}
-          {...dragHandle.listeners}
-        >
-          <GripVertical className="h-4 w-4" />
-        </div>
-        <div className="h-4 w-px bg-border/50 shrink-0" />
-        <button
-          type="button"
-          title="Remove from parking lot"
-          className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            entry.onUnpin();
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-      <div className="flex items-start gap-1.5">
-        <KindIcon className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground/40" />
-        <p className="text-xs font-medium leading-snug line-clamp-2">
-          {entry.name}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* ── sortable column ─────────────────────────────────────────── */
-
-function SortableColumn({
-  columnKey,
-  title,
-  icon: Icon,
-  accent,
-  ids,
-  headerInline,
-  isDropTarget,
-  delay,
-  children,
-}: {
-  columnKey: string;
-  title?: string;
-  icon: typeof Briefcase;
-  accent: string;
-  ids: string[];
-  headerInline?: React.ReactNode;
-  isDropTarget?: boolean;
-  delay?: number;
-  children: React.ReactNode;
-}) {
-  /* Make the card list a drop target so items can be dropped here even when empty */
-  const { setNodeRef } = useDroppable({ id: `col-${columnKey}` });
-
-  return (
-    <motion.div
-      initial={MOTION_RISE.initial}
-      animate={MOTION_RISE.animate}
-      transition={{
-        ...MOTION_TRANSITION,
-        delay: delay != null ? delay / 1000 : 0,
-      }}
-      className={cn(
-        "flex min-w-0 rounded-xl border overflow-hidden transition-all duration-300",
-        GLASS_COLUMN,
-        isDropTarget
-          ? "border-2 ring-2 ring-offset-1 scale-[1.01] shadow-xl"
-          : "border-white/40 dark:border-white/[0.07]",
-      )}
-      style={
-        isDropTarget
-          ? { borderColor: accent, boxShadow: `0 0 24px ${accent}30, 0 0 48px ${accent}15` }
-          : undefined
-      }
-    >
-      {/* accent left bar */}
-      <div className="w-[3px] shrink-0 rounded-l-xl transition-colors duration-300" style={{ background: accent }} />
-      <div className="flex flex-col min-w-0 flex-1">
-        {/* glass-morphism header */}
-        <div className="sticky top-0 z-[5] px-4 py-3 bg-white/55 dark:bg-background/55 backdrop-blur-2xl border-b border-white/40 dark:border-white/[0.07] rounded-tr-xl">
-          <div className="flex items-center gap-2">
-            {/* accent vertical bar indicator */}
-            <div className="w-1 h-5 rounded-full shrink-0" style={{ background: accent }} />
-            {/* icon + overlapping count badge */}
-            <div className="relative shrink-0 mr-1">
-              <Icon className="h-5 w-5 transition-colors duration-200" style={{ color: accent }} />
-              <span
-                className="absolute -bottom-1.5 -right-2 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full text-[9px] font-bold tabular-nums border border-background transition-colors duration-200"
-                style={{ background: accent, color: "#fff" }}
-              >
-                {ids.length}
-              </span>
-            </div>
-            {title && (
-              <h2 className="text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground truncate">
-                {title}
-              </h2>
-            )}
-            {headerInline}
-          </div>
-        </div>
-        {/* sortable card list */}
-        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          <div ref={setNodeRef} className="flex-1 overflow-y-auto px-3 pt-2 pb-3 space-y-2.5">
-            {children}
-            {ids.length === 0 && (
-              <div className="flex flex-col items-center py-10 text-muted-foreground/30">
-                <Icon className="h-10 w-10 mb-3 opacity-40" style={{ color: accent }} />
-                <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/40">
-                  No items
-                </p>
-              </div>
-            )}
-          </div>
-        </SortableContext>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ── edit dialog state ────────────────────────────────────────── */
-
-type EditTarget =
-  | { kind: "action-item"; item: ActionItem }
-  | { kind: "project"; item: Project }
-  | { kind: "idea"; item: Idea }
-  | { kind: "meeting-summary"; item: MeetingSummary }
-  | null;
-
-/* ── main board dashboard ─────────────────────────────────────── */
+/* ── main board dashboard ────────────────────────────────────── */
 
 export function BoardDashboard() {
   const {
@@ -726,6 +236,7 @@ export function BoardDashboard() {
   const updateProject = useUpdateProject();
   const updateIdea = useUpdateIdea();
   const updateMeetingSummary = useUpdateMeetingSummary();
+  const createActionItem = useCreateActionItem();
 
   /* work column task-type filter */
   const [workFilter, setWorkFilter] = useState<number | null>(null);
@@ -733,10 +244,13 @@ export function BoardDashboard() {
   /* edit dialog state */
   const [editTarget, setEditTarget] = useState<EditTarget>(null);
 
+  /* create dialog state (for Projects / Ideas quick-add) */
+  const [createDialog, setCreateDialog] = useState<"project" | "idea" | null>(null);
+
   /* drag-over column highlight */
   const [overColumn, setOverColumn] = useState<string | null>(null);
 
-  /* sort order state — seeded from localStorage on first render */
+  /* sort order state */
   const [orders, setOrders] = useState<Record<string, string[]>>(() => ({
     parkingLot: getSavedOrder("parkingLot"),
     work: getSavedOrder("work"),
@@ -748,21 +262,6 @@ export function BoardDashboard() {
     setOrders((prev) => ({ ...prev, [columnKey]: newIds }));
     saveOrder(columnKey, newIds);
   }, []);
-
-  /* priority handlers */
-  const handleActionItemPriority = (id: string, priority: number | null) => {
-    updateActionItem.mutate({ id, fields: { tdvsp_priority: priority } as never });
-  };
-
-  const handleProjectPriority = (id: string, priority: number | null) => {
-    updateProject.mutate({ id, fields: { tdvsp_priority: priority } as never });
-  };
-
-  const handleIdeaPriority = (id: string, priority: number | null) => {
-    updateIdea.mutate({ id, fields: { tdvsp_priority: priority } as never });
-  };
-
-
 
   /* pin/unpin handlers */
   const handleActionItemPin = (id: string) => {
@@ -789,20 +288,31 @@ export function BoardDashboard() {
     updateMeetingSummary.mutate({ id, fields: { tdvsp_pinned: newVal } as never });
   };
 
+  /* quick add handler for action items */
+  const handleQuickAddActionItem = (name: string) => {
+    createActionItem.mutate({
+      tdvsp_name: name,
+      tdvsp_priority: PRIORITY_MED,
+      tdvsp_taskstatus: STATUS_RECOGNIZED,
+      tdvsp_tasktype: workFilter ?? TASK_TYPE_WORK,
+    } as never);
+  };
+
   const isLoading = loadingItems || loadingProjects || loadingIdeas || loadingMeetings;
 
-  /* ── build parking lot (all pinned items across entities) ──── */
+  /* ── build parking lot ─────────────────────────────────────── */
   const parkingLotEntries: ParkingLotEntry[] = [];
 
   (actionItems ?? []).filter(isItemPinned).forEach((item) => {
-    const taskType = (item.tdvsp_tasktype != null ? TASK_TYPE_LABELS[item.tdvsp_tasktype] : undefined) ?? "Task";
     parkingLotEntries.push({
       kind: "action-item",
       id: item.tdvsp_actionitemid,
       sortId: `ai-${item.tdvsp_actionitemid}`,
       name: item.tdvsp_name,
-      label: taskType,
-      colorIdx: priorityToColorIndex(item.tdvsp_priority),
+      description: item.tdvsp_description ?? undefined,
+      priority: item.tdvsp_priority ?? undefined,
+      taskType: item.tdvsp_tasktype ?? undefined,
+      modifiedOn: (item as unknown as Record<string, string>).modifiedon ?? undefined,
       onUnpin: () => handleActionItemPin(item.tdvsp_actionitemid),
       onEdit: () => setEditTarget({ kind: "action-item", item }),
     });
@@ -814,8 +324,9 @@ export function BoardDashboard() {
       id: project.tdvsp_projectid,
       sortId: `proj-${project.tdvsp_projectid}`,
       name: project.tdvsp_name,
-      label: "Project",
-      colorIdx: priorityToColorIndex(project.tdvsp_priority),
+      description: project.tdvsp_description ?? undefined,
+      priority: project.tdvsp_priority ?? undefined,
+      modifiedOn: (project as unknown as Record<string, string>).modifiedon ?? undefined,
       onUnpin: () => handleProjectPin(project.tdvsp_projectid),
       onEdit: () => setEditTarget({ kind: "project", item: project }),
     });
@@ -828,65 +339,51 @@ export function BoardDashboard() {
       id: idea.tdvsp_ideaid,
       sortId: `idea-${idea.tdvsp_ideaid}`,
       name: idea.tdvsp_name,
-      label: "Idea",
-      colorIdx: priorityToColorIndex(priority),
+      description: idea.tdvsp_description ?? undefined,
+      priority: priority ?? undefined,
+      modifiedOn: (idea as unknown as Record<string, string>).modifiedon ?? undefined,
       onUnpin: () => handleIdeaPin(idea.tdvsp_ideaid),
       onEdit: () => setEditTarget({ kind: "idea", item: idea }),
     });
   });
 
   (meetingSummaries ?? []).filter(isItemPinned).forEach((ms) => {
-    const priority = (ms as unknown as Record<string, number>).tdvsp_priority;
     parkingLotEntries.push({
       kind: "meeting-summary",
       id: ms.tdvsp_meetingsummaryid,
       sortId: `ms-${ms.tdvsp_meetingsummaryid}`,
       name: ms.tdvsp_name,
-      label: "Meeting",
-      colorIdx: priorityToColorIndex(priority),
+      modifiedOn: (ms as unknown as Record<string, string>).modifiedon ?? undefined,
       onUnpin: () => handleMeetingSummaryPin(ms.tdvsp_meetingsummaryid),
       onEdit: () => setEditTarget({ kind: "meeting-summary", item: ms }),
     });
   });
 
-  const sortedParkingLot = applyOrder(
-    parkingLotEntries,
-    (e) => e.sortId,
-    orders.parkingLot ?? [],
-  );
+  const sortedParkingLot = applyOrder(parkingLotEntries, (e) => e.sortId, orders.parkingLot ?? []);
   const parkingLotIds = sortedParkingLot.map((e) => e.sortId);
 
   /* ── build other columns ───────────────────────────────────── */
   const work = applyOrder(
     actionItems?.filter(
       (i) =>
-        i.tdvsp_taskstatus !== COMPLETE &&
+        i.tdvsp_taskstatus !== STATUS_COMPLETE &&
         (workFilter === null || i.tdvsp_tasktype === workFilter)
     ) ?? [],
     (i) => i.tdvsp_actionitemid,
     orders.work ?? [],
   );
-  const projectList = applyOrder(
-    projects ?? [],
-    (p) => p.tdvsp_projectid,
-    orders.projects ?? [],
-  );
-  const ideaList = applyOrder(
-    ideas ?? [],
-    (i) => i.tdvsp_ideaid,
-    orders.ideas ?? [],
-  );
+  const projectList = applyOrder(projects ?? [], (p) => p.tdvsp_projectid, orders.projects ?? []);
+  const ideaList = applyOrder(ideas ?? [], (i) => i.tdvsp_ideaid, orders.ideas ?? []);
 
   const workIds = work.map((i) => i.tdvsp_actionitemid);
   const projectIds = projectList.map((p) => p.tdvsp_projectid);
   const ideaIds = ideaList.map((i) => i.tdvsp_ideaid);
 
-  /* ── top-level DnD ─────────────────────────────────────────── */
+  /* ── DnD setup ─────────────────────────────────────────────── */
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
-  /* Use pointerWithin first (precise for columns), fall back to closestCenter (for sortable reorder) */
   const workIdSet = new Set(workIds);
   const projectIdSet = new Set(projectIds);
   const ideaIdSet = new Set(ideaIds);
@@ -901,16 +398,13 @@ export function BoardDashboard() {
     return null;
   }, [workIdSet, projectIdSet, ideaIdSet, parkingLotIdSet]);
 
-  /* closestCenter for within-column reorder; pointerWithin column droppable for cross-column */
   const collisionDetection: CollisionDetection = useCallback((args) => {
     const centerHits = closestCenter(args);
     if (centerHits.length > 0) {
       const activeCol = getColumnForId(String(args.active.id));
       const overCol = centerHits[0] ? getColumnForId(String(centerHits[0].id)) : null;
-      // Same column → use closestCenter so cards can reorder
       if (activeCol && activeCol === overCol) return centerHits;
     }
-    // Different column or no sortable hit → detect which column the pointer is in
     const pointerHits = pointerWithin(args);
     const colHit = pointerHits.find((h) => String(h.id).startsWith("col-"));
     if (colHit) return [colHit];
@@ -919,8 +413,7 @@ export function BoardDashboard() {
 
   const handleBoardDragOver = (event: DragOverEvent) => {
     const overId = event.over ? String(event.over.id) : null;
-    const col = overId ? getColumnForId(overId) : null;
-    setOverColumn(col);
+    setOverColumn(overId ? getColumnForId(overId) : null);
   };
 
   const handleBoardDragEnd = (event: DragEndEvent) => {
@@ -932,10 +425,9 @@ export function BoardDashboard() {
     const overId = String(over.id);
     const srcCol = getColumnForId(activeId);
     const dstCol = getColumnForId(overId);
-
     if (!srcCol || !dstCol) return;
 
-    /* ── same column → reorder ───────────────────────────── */
+    /* same column → reorder */
     if (srcCol === dstCol) {
       const colIds =
         srcCol === "work" ? workIds :
@@ -950,57 +442,70 @@ export function BoardDashboard() {
       return;
     }
 
-    /* ── cross-column: → parking lot = pin ───────────────── */
+    /* cross-column: → parking lot = pin */
     if (dstCol === "parkingLot" && srcCol !== "parkingLot") {
-      if (srcCol === "work") {
-        updateActionItem.mutate({ id: activeId, fields: { tdvsp_pinned: true } as never });
-      } else if (srcCol === "projects") {
-        updateProject.mutate({ id: activeId, fields: { tdvsp_pinned: true } as never });
-      } else if (srcCol === "ideas") {
-        updateIdea.mutate({ id: activeId, fields: { tdvsp_pinned: true } as never });
-      }
+      if (srcCol === "work") updateActionItem.mutate({ id: activeId, fields: { tdvsp_pinned: true } as never });
+      else if (srcCol === "projects") updateProject.mutate({ id: activeId, fields: { tdvsp_pinned: true } as never });
+      else if (srcCol === "ideas") updateIdea.mutate({ id: activeId, fields: { tdvsp_pinned: true } as never });
       return;
     }
 
-    /* ── cross-column: parking lot → elsewhere = unpin ───── */
+    /* cross-column: parking lot → elsewhere = unpin */
     if (srcCol === "parkingLot" && dstCol !== "parkingLot") {
-      if (activeId.startsWith("ai-")) {
-        updateActionItem.mutate({ id: activeId.slice(3), fields: { tdvsp_pinned: false } as never });
-      } else if (activeId.startsWith("proj-")) {
-        updateProject.mutate({ id: activeId.slice(5), fields: { tdvsp_pinned: false } as never });
-      } else if (activeId.startsWith("idea-")) {
-        updateIdea.mutate({ id: activeId.slice(5), fields: { tdvsp_pinned: false } as never });
-      } else if (activeId.startsWith("ms-")) {
-        updateMeetingSummary.mutate({ id: activeId.slice(3), fields: { tdvsp_pinned: false } as never });
-      }
+      if (activeId.startsWith("ai-")) updateActionItem.mutate({ id: activeId.slice(3), fields: { tdvsp_pinned: false } as never });
+      else if (activeId.startsWith("proj-")) updateProject.mutate({ id: activeId.slice(5), fields: { tdvsp_pinned: false } as never });
+      else if (activeId.startsWith("idea-")) updateIdea.mutate({ id: activeId.slice(5), fields: { tdvsp_pinned: false } as never });
+      else if (activeId.startsWith("ms-")) updateMeetingSummary.mutate({ id: activeId.slice(3), fields: { tdvsp_pinned: false } as never });
     }
   };
 
+  /* ── error state ───────────────────────────────────────────── */
   if (itemsError) {
     return (
-      <div className="rounded-xl border border-destructive/40 bg-destructive/5 dark:bg-destructive/10 p-5 text-destructive">
+      <div
+        className="rounded-xl p-5"
+        style={{
+          border: "1px solid var(--dash-red)",
+          background: "var(--dash-t-red)",
+          color: "var(--dash-red)",
+        }}
+      >
         Failed to load board data: {itemsError.message}
       </div>
     );
   }
 
+  /* ── loading state ─────────────────────────────────────────── */
   if (isLoading) {
     return (
-      <div className="space-y-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15">
-            <Columns3 className="h-5 w-5 text-primary" />
+      <div
+        className="h-full flex flex-col"
+        style={{ fontFamily: "'Inter', sans-serif", background: "var(--dash-bg)" }}
+      >
+        <div className="flex items-center gap-3 p-4">
+          <div
+            className="w-7 h-7 rounded-[7px] grid place-items-center"
+            style={{ background: "var(--dash-t-violet)", color: "var(--dash-violet)" }}
+          >
+            <Columns3 className="h-4 w-4" />
           </div>
           <div>
             <Skeleton className="h-5 w-28 mb-1.5" />
             <Skeleton className="h-3 w-52" />
           </div>
         </div>
-        <div className="grid grid-cols-[1fr_2fr_1fr_1fr] gap-3 h-[calc(100vh-12rem)]">
+        <div
+          className="grid flex-1 min-h-0 gap-3 px-[18px] pb-[18px]"
+          style={{ gridTemplateColumns: "1fr 2fr 1fr 1fr" }}
+        >
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-border/40 dark:border-border/25 bg-muted/20 dark:bg-muted/10 p-4">
+            <div
+              key={i}
+              className="rounded-xl p-4"
+              style={{ background: "var(--dash-surface-2)", border: "1px solid var(--dash-border)" }}
+            >
               <Skeleton className="h-4 w-20 mb-1" />
-              <div className="h-px bg-border/30 mb-4" />
+              <div className="h-px mb-4" style={{ background: "var(--dash-border)" }} />
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, j) => (
                   <Skeleton key={j} className="h-20 w-full rounded-lg" />
@@ -1013,165 +518,177 @@ export function BoardDashboard() {
     );
   }
 
-  return (
-    <div className="space-y-5 h-full flex flex-col">
-      {/* Header */}
-      <motion.div
-        className="flex items-center gap-3 shrink-0"
-        initial={MOTION_RISE.initial}
-        animate={MOTION_RISE.animate}
-        transition={MOTION_TRANSITION}
+  /* ── work column filter tabs (headerInline) ────────────────── */
+  const workHeaderInline = (
+    <div className="flex items-center gap-1.5 mt-0.5">
+      <button
+        type="button"
+        title="All"
+        className="text-[10px] font-semibold px-[7px] py-[3px] rounded cursor-pointer border"
+        style={{
+          fontFamily: "inherit",
+          background: workFilter === null ? "var(--dash-ink-1)" : "var(--dash-surface)",
+          color: workFilter === null ? "#fff" : "var(--dash-ink-3)",
+          borderColor: workFilter === null ? "var(--dash-ink-1)" : "var(--dash-border-strong)",
+        }}
+        onClick={() => setWorkFilter(null)}
       >
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/15 backdrop-blur-xl border border-white/20 dark:border-white/[0.06]">
-          <Columns3 className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">My Board</h1>
-          <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/50">
-            Kanban view across action items, projects &amp; ideas
-          </p>
-        </div>
-      </motion.div>
-
-        {/* 4-column board — single DndContext for cross-column drag */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={collisionDetection}
-          onDragOver={handleBoardDragOver}
-          onDragEnd={handleBoardDragEnd}
-          onDragCancel={() => setOverColumn(null)}
+        A
+      </button>
+      {WORK_FILTERS.map((f) => (
+        <button
+          key={f.key}
+          type="button"
+          title={f.label}
+          className="text-[10px] font-semibold px-[7px] py-[3px] rounded cursor-pointer border"
+          style={{
+            fontFamily: "inherit",
+            background: workFilter === f.key ? f.accent : "var(--dash-surface)",
+            color: workFilter === f.key ? "#fff" : "var(--dash-ink-3)",
+            borderColor: workFilter === f.key ? f.accent : "var(--dash-border-strong)",
+          }}
+          onClick={() => setWorkFilter(f.key)}
         >
-        <div className="grid grid-cols-[1fr_2fr_1fr_1fr] gap-3 flex-1 min-h-0">
+          {f.letter}
+        </button>
+      ))}
+    </div>
+  );
+
+  const wfc = workFilterConfig(workFilter);
+
+  return (
+    <div
+      className="h-full flex flex-col"
+      style={{ fontFamily: "'Inter', sans-serif", background: "var(--dash-bg)" }}
+    >
+      {/* Toolbar */}
+      <BoardToolbar
+        onNewItem={() => setEditTarget({ kind: "action-item", item: undefined as unknown as ActionItem })}
+      />
+
+      {/* Board grid */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={collisionDetection}
+        onDragOver={handleBoardDragOver}
+        onDragEnd={handleBoardDragEnd}
+        onDragCancel={() => setOverColumn(null)}
+      >
+        <div
+          className="grid flex-1 min-h-0"
+          style={{
+            gridTemplateColumns: "1fr 2fr 1fr 1fr",
+            gap: "12px",
+            padding: "14px 18px 18px",
+          }}
+        >
           {/* Parking Lot */}
-          <SortableColumn
+          <BoardColumn
             columnKey="parkingLot"
-            title="parking lot"
-            icon={Car}
-            accent={ACCENT.parkingLot}
+            title="Parking Lot"
+            icon={COLUMN_ICONS.parkingLot}
+            accent={COLUMN_COLORS.parkingLot}
             ids={parkingLotIds}
             isDropTarget={overColumn === "parkingLot"}
             delay={60}
+            quickAddPlaceholder="Add to parking lot…"
           >
             {sortedParkingLot.map((entry, idx) => (
               <SortableCard key={entry.sortId} id={entry.sortId} index={idx}>
                 {(handle) => <ParkingLotCard entry={entry} dragHandle={handle} />}
               </SortableCard>
             ))}
-          </SortableColumn>
+          </BoardColumn>
 
-          {/* Work — accent + icon shift with active filter */}
-          <SortableColumn
+          {/* Work (Action Items) */}
+          <BoardColumn
             columnKey="work"
-            title={workFilterConfig(workFilter).title}
-            icon={workFilterConfig(workFilter).icon}
-            accent={workFilterConfig(workFilter).accent}
+            title={wfc.title}
+            icon={wfc.icon}
+            accent={wfc.accent}
             ids={workIds}
             isDropTarget={overColumn === "work"}
             delay={135}
-            headerInline={
-              <div className="ml-auto flex items-center gap-0.5">
-                <button
-                  type="button"
-                  title="All"
-                  className={cn(
-                    "h-5 w-5 rounded-full text-[9px] font-bold leading-none transition-all duration-200",
-                    workFilter === null
-                      ? "bg-foreground text-background shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-                  )}
-                  onClick={() => setWorkFilter(null)}
-                >
-                  A
-                </button>
-                {WORK_FILTERS.map((f) => (
-                  <button
-                    key={f.key}
-                    type="button"
-                    title={f.label}
-                    className={cn(
-                      "h-5 w-5 rounded-full text-[9px] font-bold leading-none transition-all duration-200",
-                      workFilter === f.key
-                        ? "text-white shadow-sm"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-                    )}
-                    style={workFilter === f.key ? { background: f.accent } : undefined}
-                    onClick={() => setWorkFilter(f.key)}
-                  >
-                    {f.letter}
-                  </button>
-                ))}
-              </div>
-            }
+            headerInline={workHeaderInline}
+            quickAddPlaceholder="Add action item…"
+            onQuickAdd={handleQuickAddActionItem}
           >
             {work.map((item, idx) => (
               <SortableCard key={item.tdvsp_actionitemid} id={item.tdvsp_actionitemid} index={idx}>
                 {(handle) => (
-                  <ActionItemCard
-                    item={item}
-                    showStatus={true}
-                    onPriorityChange={handleActionItemPriority}
-                    onPinToggle={handleActionItemPin}
-                    onEdit={(ai) => setEditTarget({ kind: "action-item", item: ai })}
+                  <BoardCard
+                    config={toActionItemConfig(
+                      item,
+                      () => setEditTarget({ kind: "action-item", item }),
+                      () => handleActionItemPin(item.tdvsp_actionitemid),
+                    )}
                     dragHandle={handle}
                   />
                 )}
               </SortableCard>
             ))}
-          </SortableColumn>
+          </BoardColumn>
 
           {/* Projects */}
-          <SortableColumn
+          <BoardColumn
             columnKey="projects"
-            title="projects"
-            icon={FolderKanban}
-            accent={ACCENT.projects}
+            title="Projects"
+            icon={COLUMN_ICONS.projects}
+            accent={COLUMN_COLORS.projects}
             ids={projectIds}
             isDropTarget={overColumn === "projects"}
             delay={210}
+            quickAddPlaceholder="Add project…"
+            onQuickAddClick={() => setCreateDialog("project")}
           >
             {projectList.map((project, idx) => (
               <SortableCard key={project.tdvsp_projectid} id={project.tdvsp_projectid} index={idx}>
                 {(handle) => (
-                  <ProjectCard
-                    project={project}
-                    onPriorityChange={handleProjectPriority}
-                    onPinToggle={handleProjectPin}
-                    onEdit={(p) => setEditTarget({ kind: "project", item: p })}
+                  <BoardCard
+                    config={toProjectConfig(
+                      project,
+                      () => setEditTarget({ kind: "project", item: project }),
+                      () => handleProjectPin(project.tdvsp_projectid),
+                    )}
                     dragHandle={handle}
                   />
                 )}
               </SortableCard>
             ))}
-          </SortableColumn>
+          </BoardColumn>
 
           {/* Ideas */}
-          <SortableColumn
+          <BoardColumn
             columnKey="ideas"
-            title="ideas"
-            icon={Lightbulb}
-            accent={ACCENT.ideas}
+            title="Ideas"
+            icon={COLUMN_ICONS.ideas}
+            accent={COLUMN_COLORS.ideas}
             ids={ideaIds}
             isDropTarget={overColumn === "ideas"}
             delay={285}
+            quickAddPlaceholder="Capture an idea…"
+            onQuickAddClick={() => setCreateDialog("idea")}
           >
             {ideaList.map((idea, idx) => (
               <SortableCard key={idea.tdvsp_ideaid} id={idea.tdvsp_ideaid} index={idx}>
                 {(handle) => (
-                  <IdeaCard
-                    idea={idea}
-                    onPriorityChange={handleIdeaPriority}
-                    onPinToggle={handleIdeaPin}
-                    onEdit={(i) => setEditTarget({ kind: "idea", item: i })}
+                  <BoardCard
+                    config={toIdeaConfig(
+                      idea,
+                      () => setEditTarget({ kind: "idea", item: idea }),
+                      () => handleIdeaPin(idea.tdvsp_ideaid),
+                    )}
                     dragHandle={handle}
                   />
                 )}
               </SortableCard>
             ))}
-          </SortableColumn>
+          </BoardColumn>
         </div>
-        </DndContext>
+      </DndContext>
 
-      {/* ── edit dialogs ─────────────────────────────────────── */}
+      {/* ── Edit dialogs ─────────────────────────────────────── */}
       <ActionItemFormDialog
         open={editTarget?.kind === "action-item"}
         onOpenChange={(open) => { if (!open) setEditTarget(null); }}
@@ -1179,15 +696,25 @@ export function BoardDashboard() {
         actionItem={editTarget?.kind === "action-item" ? editTarget.item : undefined}
       />
       <IdeaFormDialog
-        open={editTarget?.kind === "idea"}
-        onOpenChange={(open) => { if (!open) setEditTarget(null); }}
-        mode="edit"
+        open={editTarget?.kind === "idea" || createDialog === "idea"}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditTarget(null);
+            setCreateDialog(null);
+          }
+        }}
+        mode={createDialog === "idea" ? "create" : "edit"}
         idea={editTarget?.kind === "idea" ? editTarget.item : undefined}
       />
       <ProjectFormDialog
-        open={editTarget?.kind === "project"}
-        onOpenChange={(open) => { if (!open) setEditTarget(null); }}
-        mode="edit"
+        open={editTarget?.kind === "project" || createDialog === "project"}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditTarget(null);
+            setCreateDialog(null);
+          }
+        }}
+        mode={createDialog === "project" ? "create" : "edit"}
         project={editTarget?.kind === "project" ? editTarget.item : undefined}
       />
       <MeetingSummaryFormDialog

@@ -640,3 +640,52 @@ All changes in `src/components/layout/app-layout.tsx`.
 - **CSS custom properties beat Tailwind classes for a localized design system.** The `--dash-*` vars give the dashboard its own visual language without conflicting with shadcn/ui's HSL variables.
 - **Per-account status breakdown requires a two-level bucket.** `Map<accountName, Map<statusLabel, count>>` — compute once, pass as `statusBreakdown` on each `AccountDatum`.
 - **`createdon` isn't in generated types** but exists at runtime. Access via double-cast: `(item as unknown as Record<string, string>).createdon`.
+
+## Phase 26 — Board Decomposition: Stripe/Retool Style
+
+**Prompt:** "Apply the same Stripe/Retool `--dash-*` design system from Phase 25 to the Board (kanban) view. Decompose the monolithic `board-dashboard.tsx` into sub-components."
+
+**Why:** The board was a single 800+ line file with glassmorphism styling that didn't match the new flat `--dash-*` dashboard aesthetic. It needed the same decomposition treatment as the dashboard.
+
+**What happened:**
+
+1. **Created `board-tokens.ts`** — Shared constants, types, and config: entity type aliases, status/priority constants, column accent colors, WIP limits, `PRIORITY_RAIL_COLORS`, `TASK_TYPE_ICON_CONFIG`, `ENTITY_ICON_CONFIG`, `PRIORITY_PILL_STYLES`, `STATUS_PILL_STYLES`, work filter config, edit target discriminated union, parking lot entry type, and normalized `CardConfig` shape. All using `--dash-*` CSS variable references.
+
+2. **Created `board-card.tsx`** — `BoardCard` and `ParkingLotCard` components. Cards use `--dash-surface` bg, 3px priority rail, 18×18 type-icon tile, inline `Pill` component with JetBrains Mono font, overdue badges, activity dots (blue dot if `modifiedon` < 24h), and a hover toolbar (GripVertical + Pencil + Car pin toggle). No glassmorphism — flat surfaces with subtle shadows.
+
+3. **Created `board-column.tsx`** — `BoardColumn` component wrapping `@dnd-kit` sortable context. Sticky column header with accent stripe, icon tile, count badge, WIP limit badge. Framer Motion entrance animation. Drop target highlight with accent glow.
+
+4. **Created `board-toolbar.tsx`** — `BoardToolbar` with icon tile + eyebrow + h1, filter pills, segmented view control, and "New Item" button — matching the dashboard `page-header.tsx` pattern.
+
+5. **Rewrote `board-dashboard.tsx`** — Reduced to an orchestrator importing the sub-components. Data fetching, drag-and-drop logic, and edit dialog state remain in the orchestrator.
+
+**Files created:** `board-tokens.ts`, `board-card.tsx`, `board-column.tsx`, `board-toolbar.tsx`
+**Files modified:** `board-dashboard.tsx`, `index.css`
+
+## Phase 27 — Action Items List View Redesign
+
+**Prompt:** "Apply the Stripe/Retool `--dash-*` design system to the Action Items list view, matching the mockup in `inbox/Action Items.html`."
+
+**Why:** The action items list still used the old shadcn Table + Card dual-view layout with basic type filtering. The dashboard (Phase 25) and board (Phase 26) had been restyled — the action items list was the last major view using the old aesthetic.
+
+**What happened:**
+
+1. **Created `action-items-toolbar.tsx`** — Page header with CheckSquare icon tile (violet), "Track and manage your tasks" eyebrow, "Action Items" h1, search input with `/` kbd hint, Export button (visual-only), and "New Action Item" primary dark button. All `--dash-*` inline styles.
+
+2. **Created `action-items-table.tsx`** — Main table component with three sub-components:
+   - **`ActionItemsTable`** — Sticky header with sortable columns (Name, Priority, Status, Due, Updated, Actions). Click column header to sort asc → desc → clear. Select-all checkbox. Empty state.
+   - **`GroupSection`** (GroupRow) — Collapsible account group header with chevron toggle, 2-letter colored avatar (deterministic color from name hash across 6 semantic colors), account name, count pill, mini 4px status distribution bar, "N open · M overdue" text.
+   - **`ItemRow`** — Checkbox, 3px priority rail (`PRIORITY_RAIL_COLORS`), 18×18 type-icon tile (`TASK_TYPE_ICON_CONFIG`), name + description meta-line (Rich mode), priority pill, status pill, due date + overdue/soon badge, relative time ("2h", "1d", "2w") + blue activity dot, edit/delete hover actions.
+
+3. **Created `action-items-bulk-bar.tsx`** — Floating bottom-center bar with Framer Motion `AnimatePresence` (slide-up on appear, slide-down on disappear). Dark bg, "N selected" count pill, Mark complete button, Delete button (red), clear selection × button.
+
+4. **Rewrote `action-item-list.tsx`** — From 385-line monolith with shadcn Table/Card dual view to ~310-line orchestrator:
+   - **Saved-view tabs:** All, Overdue (red count pill), High priority, Due this week — computed client-side with live counts
+   - **Subtoolbar:** Group by Account toggle, Type/Priority/Status dropdown filter pills, "Add filter" (visual-only), density toggle (Compact/Rich, persisted to localStorage), item count
+   - **Data pipeline:** `useMemo` chain: view preset → facet filters → sort → group by account → `GroupData[]`
+   - **Row selection:** Per-item checkboxes + select-all with bulk Mark complete (fires confetti via existing hook) and Delete
+   - **Removed:** shadcn Table, Card, Badge, ViewToggle, TileColorDots imports. No card view — table-only with density modes
+
+**Files created:** `action-items-toolbar.tsx`, `action-items-table.tsx`, `action-items-bulk-bar.tsx`
+**Files modified:** `action-item-list.tsx`
+**Files unchanged:** `action-item-form-dialog.tsx`, `action-item-detail-dialog.tsx`, `action-item-delete-dialog.tsx`, `labels.ts`, `use-action-items.ts`, `board-tokens.ts`

@@ -132,18 +132,28 @@ Use the pencil (edit) and trash (delete) icons in the Actions column, or click *
 
 ### Viewing Action Items
 
-The Action Items page shows a page header with icon, a search bar, task-type filter pills, a view toggle, and a data table. Columns: Name, Priority, Status, Date, and Actions. Priority and Status display as color-coded badges. Each row shows a small colored task-type icon (Briefcase for Work, House for Personal, BookOpen for Learning) inline with the action item name. Click any row to open the detail card. In card view, each card shows name, priority/status badges, date, and a task-type icon.
+The Action Items page uses the `--dash-*` Stripe/Retool design system — a table-only view (no card view) with rich filtering, grouping, and bulk actions.
 
-### Task-Type Filter Pills
+**Toolbar:** Icon tile (violet CheckSquare), "Track and manage your tasks" eyebrow, "Action Items" heading, search input with `/` kbd hint, Export button (visual-only), and "New Action Item" primary dark button.
 
-Below the search bar, four filter pills let you narrow the list by task type:
+**Saved-View Tabs:** Below the toolbar, tabs filter items by preset views:
+- **All** — all action items (count shown)
+- **Overdue** — items past due and not Complete (red count pill)
+- **High priority** — Top Priority + High items
+- **Due this week** — items due within 7 days
 
-- **All** (dark/inverted when active) — shows all action items
-- **Work** (red, Briefcase icon) — shows only Work items
-- **Personal** (blue, House icon) — shows only Personal items
-- **Learning** (magenta, BookOpen icon) — shows only Learning items
+Counts update live as items change.
 
-Filters are applied client-side. The active pill is solid-filled; inactive pills show an outline style.
+**Subtoolbar:** Filter pills and controls:
+- **Group by Account** — toggle to group items by customer account (default on). Groups show a collapsible header with 2-letter colored avatar, account name, count, a mini status distribution bar, and "N open · M overdue" text
+- **Type / Priority / Status** — dropdown filter pills. Click to select a value; active pill inverts to dark. Click again to clear
+- **Add filter** — visual-only placeholder
+- **Compact / Rich density** — toggle between compact rows (no description) and rich rows (with description meta-line). Persisted to localStorage
+- **Item count** — shows number of visible items
+
+**Table Columns:** Checkbox, Name (with 3px priority rail + type icon tile), Priority (pill), Status (pill), Due (date + overdue/soon badge), Updated (relative time + blue activity dot if < 24h), Actions (edit/delete on hover).
+
+**Row Selection & Bulk Actions:** Click checkboxes to select rows, or use the header checkbox for select-all. A floating bar slides up from the bottom showing "N selected", Mark complete (fires confetti), Delete, and clear selection.
 
 ### Action Item Detail Card
 

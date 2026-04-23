@@ -156,13 +156,18 @@ Click the Moon/Sun button in the sidebar footer — below the Ctrl+K hint. Moon 
 
 Tailwind v4 dropped the `darkMode: "class"` config option from `tailwind.config.ts`. The equivalent in v4 is `@custom-variant dark (&:where(.dark, .dark *));` at the top of `src/index.css`. This tells Tailwind that `dark:` utility classes should activate when the `.dark` class is present on an ancestor element, which is what the `ThemeProvider` toggles. Without this line, all `dark:` classes in the app would be silently ignored.
 
-## How do the action item type filters work?
+## How does the Action Items list view work (Phase 27)?
 
-The Action Items list page has four filter pills below the header: **All**, **Work** (red, Briefcase icon), **Personal** (blue, House icon), and **Learning** (magenta, BookOpen icon). Clicking a pill sets a `typeFilter` state variable to the corresponding Dataverse numeric choice key (or `null` for All). The displayed list is filtered client-side via `useMemo`. Active pills invert to solid fill with white text; inactive pills show an outline style. Each table row also displays a small colored task-type icon (Briefcase, House, or BookOpen) inline with the action item name.
+The Action Items list was redesigned with the `--dash-*` Stripe/Retool design system. It is table-only (no card view) with:
 
-## Why was the Customer column removed from the action items list?
+- **Saved-view tabs** (All, Overdue, High priority, Due this week) — computed client-side with live count pills
+- **Subtoolbar filter pills** — Group by Account toggle, Type/Priority/Status dropdown filters, Compact/Rich density toggle
+- **Sortable columns** — click header to sort asc → desc → clear
+- **Group by Account** — collapsible group headers with 2-letter colored avatar, count, mini status distribution bar, open/overdue counts
+- **Row selection** — checkboxes + select-all, floating bulk action bar (Mark complete with confetti, Delete)
+- **Rich table rows** — 3px priority rail, type-icon tile, name + description meta-line (Rich mode), priority/status pills, due date + overdue/soon badge, relative time + activity dot, hover edit/delete
 
-The Customer column added visual clutter without providing much value in a compact list view. Customer info is still visible in the action item detail dialog, form, and card view. Removing it freed up horizontal space for the task-type icon + name, priority badge, status badge, and date columns to breathe.
+Density (Compact/Rich) persists to localStorage under key `action-items-density`. The old card view, ViewToggle, and type filter buttons were removed in favor of this unified table design.
 
 ## Why the monospace font?
 

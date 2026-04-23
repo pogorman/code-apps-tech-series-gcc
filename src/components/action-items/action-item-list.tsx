@@ -1,56 +1,43 @@
-import { useEffect, useMemo, useState } from "react";
-import { useActionItems, useDeleteActionItem } from "@/hooks/use-action-items";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useActionItems, useDeleteActionItem, useUpdateActionItem } from "@/hooks/use-action-items";
 import { ActionItemFormDialog } from "./action-item-form-dialog";
 import { ActionItemDetailDialog } from "./action-item-detail-dialog";
 import { ActionItemDeleteDialog } from "./action-item-delete-dialog";
-import { BookOpen, Briefcase, ClipboardList, House, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { ActionItemsToolbar } from "./action-items-toolbar";
+import { ActionItemsTable, type GroupData, type SortColumn, type SortDir } from "./action-items-table";
+import { BulkActionBar } from "./action-items-bulk-bar";
+import { Rows3, Rows4, Plus, Filter } from "lucide-react";
 import type { Tdvsp_actionitemsModel } from "@/generated";
 import { toast } from "sonner";
 import { useQuickCreateStore } from "@/stores/quick-create-store";
-import {
-  PRIORITY_LABELS,
-  STATUS_LABELS,
-  priorityVariant,
-  statusVariant,
-} from "./labels";
-import { useViewPreference } from "@/hooks/use-view-preference";
-import { ViewToggle } from "@/components/ui/view-toggle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TileColorDots } from "@/components/ui/tile-color-dots";
-import { priorityToColorIndex, tileBgClass, COLOR_TO_PRIORITY } from "@/lib/tile-colors";
-import { useUpdateActionItem } from "@/hooks/use-action-items";
-import { cn } from "@/lib/utils";
+import { PRIORITY_LABELS, STATUS_LABELS, TASK_TYPE_LABELS } from "./labels";
+import { STATUS_COMPLETE } from "@/components/dashboard/board-tokens";
 
 type ActionItem = Tdvsp_actionitemsModel.Tdvsp_actionitems;
 
-const TASK_TYPE_ICON: Record<number, { icon: typeof Briefcase; color: string }> = {
-  468510001: { icon: Briefcase, color: "#ef4444" },
-  468510000: { icon: House, color: "#3b82f6" },
-  468510002: { icon: BookOpen, color: "#d946ef" },
-};
+type SavedView = "all" | "overdue" | "high" | "due-week";
+type Density = "compact" | "rich";
+
+function getDensity(): Density {
+  try {
+    const v = localStorage.getItem("action-items-density");
+    if (v === "compact" || v === "rich") return v;
+  } catch { /* noop */ }
+  return "rich";
+}
 
 export function ActionItemList() {
+  /* ── Quick create store ──────────────────────────────────── */
   const quickTarget = useQuickCreateStore((s) => s.target);
   const quickPayload = useQuickCreateStore((s) => s.payload);
   const clearQuickCreate = useQuickCreateStore((s) => s.clear);
 
-  const [viewMode, setViewMode] = useViewPreference("action-items");
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<number | null>(null);
+  /* ── Dialog state ────────────────────────────────────────── */
   const [createOpen, setCreateOpen] = useState(false);
   const [createTaskType, setCreateTaskType] = useState<number | undefined>(undefined);
+  const [editItem, setEditItem] = useState<ActionItem | null>(null);
+  const [viewItem, setViewItem] = useState<ActionItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<ActionItem | null>(null);
 
   useEffect(() => {
     if (quickTarget === "action-items") {
@@ -60,23 +47,222 @@ export function ActionItemList() {
       clearQuickCreate();
     }
   }, [quickTarget, quickPayload, clearQuickCreate]);
-  const [editItem, setEditItem] = useState<ActionItem | null>(null);
-  const [viewItem, setViewItem] = useState<ActionItem | null>(null);
-  const [deleteItem, setDeleteItem] = useState<ActionItem | null>(null);
 
+  /* ── Filter / sort / view state ──────────────────────────── */
+  const [search, setSearch] = useState("");
+  const [activeView, setActiveView] = useState<SavedView>("all");
+  const [typeFilter, setTypeFilter] = useState<number | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState<number | null>(null);
+  const [groupByAccount, setGroupByAccount] = useState(true);
+  const [sortColumn, setSortColumn] = useState<SortColumn>("priority");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [density, setDensity] = useState<Density>(getDensity);
+
+  /* ── Data hooks ──────────────────────────────────────────── */
   const filter = search
     ? `contains(tdvsp_name, '${search.replace(/'/g, "''")}')`
     : undefined;
-
-  const { data: items, isLoading, error } = useActionItems({ filter });
+  const { data: items, isLoading } = useActionItems({ filter });
   const deleteMutation = useDeleteActionItem();
   const updateMutation = useUpdateActionItem();
 
-  const filteredItems = useMemo(() => {
-    if (typeFilter === null) return items;
-    return items?.filter((i) => i.tdvsp_tasktype === typeFilter);
-  }, [items, typeFilter]);
+  /* ── Density persistence handled inline in toggle buttons ── */
 
+  /* ── Sort handler ────────────────────────────────────────── */
+  const handleSortChange = useCallback(
+    (col: SortColumn) => {
+      if (col === sortColumn) {
+        if (sortDir === "asc") setSortDir("desc");
+        else { setSortColumn(null); setSortDir("asc"); }
+      } else {
+        setSortColumn(col);
+        setSortDir("asc");
+      }
+    },
+    [sortColumn, sortDir],
+  );
+
+  /* ── Selection handlers ──────────────────────────────────── */
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  /* ── Computed: view counts (from unfiltered items) ─────── */
+  const viewCounts = useMemo(() => {
+    if (!items) return { all: 0, overdue: 0, high: 0, dueWeek: 0 };
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const weekFromNow = new Date(now);
+    weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+    let overdue = 0;
+    let high = 0;
+    let dueWeek = 0;
+    for (const it of items) {
+      if (it.tdvsp_date && it.tdvsp_taskstatus !== STATUS_COMPLETE) {
+        const due = new Date(it.tdvsp_date);
+        due.setHours(0, 0, 0, 0);
+        if (due < now) overdue++;
+        if (due >= now && due <= weekFromNow) dueWeek++;
+      }
+      if (it.tdvsp_priority === 468510002 || it.tdvsp_priority === 468510003) high++;
+    }
+    return { all: items.length, overdue, high, dueWeek };
+  }, [items]);
+
+  /* ── Computed: filtered + sorted + grouped ─────────────── */
+  const groups: GroupData[] = useMemo(() => {
+    if (!items) return [];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const weekFromNow = new Date(now);
+    weekFromNow.setDate(weekFromNow.getDate() + 7);
+
+    // 1. Apply view preset
+    let filtered = items;
+    if (activeView === "overdue") {
+      filtered = filtered.filter((it) => {
+        if (!it.tdvsp_date || it.tdvsp_taskstatus === STATUS_COMPLETE) return false;
+        const due = new Date(it.tdvsp_date);
+        due.setHours(0, 0, 0, 0);
+        return due < now;
+      });
+    } else if (activeView === "high") {
+      filtered = filtered.filter(
+        (it) => it.tdvsp_priority === 468510002 || it.tdvsp_priority === 468510003,
+      );
+    } else if (activeView === "due-week") {
+      filtered = filtered.filter((it) => {
+        if (!it.tdvsp_date || it.tdvsp_taskstatus === STATUS_COMPLETE) return false;
+        const due = new Date(it.tdvsp_date);
+        due.setHours(0, 0, 0, 0);
+        return due >= now && due <= weekFromNow;
+      });
+    }
+
+    // 2. Apply facet filters
+    if (typeFilter !== null) filtered = filtered.filter((it) => it.tdvsp_tasktype === typeFilter);
+    if (priorityFilter !== null)
+      filtered = filtered.filter((it) => it.tdvsp_priority === priorityFilter);
+    if (statusFilter !== null)
+      filtered = filtered.filter((it) => it.tdvsp_taskstatus === statusFilter);
+
+    // 3. Sort
+    const sorted = [...filtered].sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      switch (sortColumn) {
+        case "name":
+          return dir * (a.tdvsp_name ?? "").localeCompare(b.tdvsp_name ?? "");
+        case "priority":
+          return dir * ((a.tdvsp_priority ?? 0) - (b.tdvsp_priority ?? 0));
+        case "status":
+          return dir * ((a.tdvsp_taskstatus ?? 0) - (b.tdvsp_taskstatus ?? 0));
+        case "due": {
+          const da = a.tdvsp_date ? new Date(a.tdvsp_date).getTime() : 0;
+          const db = b.tdvsp_date ? new Date(b.tdvsp_date).getTime() : 0;
+          return dir * (da - db);
+        }
+        case "updated": {
+          const ma = (a as unknown as Record<string, unknown>).modifiedon as string | undefined;
+          const mb = (b as unknown as Record<string, unknown>).modifiedon as string | undefined;
+          const ta = ma ? new Date(ma).getTime() : 0;
+          const tb = mb ? new Date(mb).getTime() : 0;
+          return dir * (ta - tb);
+        }
+        default:
+          return 0;
+      }
+    });
+
+    // 4. Group by account
+    if (groupByAccount) {
+      const map = new Map<string, ActionItem[]>();
+      for (const it of sorted) {
+        const acct = (it as unknown as Record<string, unknown>).tdvsp_customername as string | undefined;
+        const key = acct || "No Account";
+        const list = map.get(key) ?? [];
+        list.push(it);
+        map.set(key, list);
+      }
+      // Sort groups: "No Account" last, rest alphabetical
+      const keys = [...map.keys()].sort((a, b) => {
+        if (a === "No Account") return 1;
+        if (b === "No Account") return -1;
+        return a.localeCompare(b);
+      });
+      return keys.map((key) => buildGroup(key, map.get(key)!, now));
+    }
+
+    // Ungrouped: single group
+    return [buildGroup("All Items", sorted, now)];
+  }, [items, activeView, typeFilter, priorityFilter, statusFilter, sortColumn, sortDir, groupByAccount]);
+
+  function buildGroup(label: string, items: ActionItem[], now: Date): GroupData {
+    let openCount = 0;
+    let overdueCount = 0;
+    const statusCounts = new Map<number, number>();
+    for (const it of items) {
+      if (it.tdvsp_taskstatus !== STATUS_COMPLETE) openCount++;
+      if (it.tdvsp_date && it.tdvsp_taskstatus !== STATUS_COMPLETE) {
+        const due = new Date(it.tdvsp_date);
+        due.setHours(0, 0, 0, 0);
+        if (due < now) overdueCount++;
+      }
+      if (it.tdvsp_taskstatus != null) {
+        statusCounts.set(it.tdvsp_taskstatus, (statusCounts.get(it.tdvsp_taskstatus) ?? 0) + 1);
+      }
+    }
+    return {
+      key: label,
+      label,
+      items,
+      openCount,
+      overdueCount,
+      statusDistribution: [...statusCounts.entries()]
+        .map(([status, count]) => ({ status, count }))
+        .sort((a, b) => a.status - b.status),
+    };
+  }
+
+  const allVisibleIds = useMemo(
+    () => groups.flatMap((g) => g.items.map((it) => it.tdvsp_actionitemid)),
+    [groups],
+  );
+  const allSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.has(id));
+
+  const toggleSelectAll = useCallback(() => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(allVisibleIds));
+    }
+  }, [allSelected, allVisibleIds]);
+
+  /* ── Bulk actions ────────────────────────────────────────── */
+  const handleBulkComplete = useCallback(() => {
+    for (const id of selectedIds) {
+      updateMutation.mutate({ id, fields: { tdvsp_taskstatus: STATUS_COMPLETE } as never });
+    }
+    toast.success(`Marked ${selectedIds.size} item(s) complete`);
+    setSelectedIds(new Set());
+  }, [selectedIds, updateMutation]);
+
+  const handleBulkDelete = useCallback(() => {
+    for (const id of selectedIds) {
+      deleteMutation.mutate(id);
+    }
+    toast.success(`Deleted ${selectedIds.size} item(s)`);
+    setSelectedIds(new Set());
+  }, [selectedIds, deleteMutation]);
+
+  /* ── Single delete ───────────────────────────────────────── */
   function handleDelete() {
     if (!deleteItem) return;
     deleteMutation.mutate(deleteItem.tdvsp_actionitemid, {
@@ -90,281 +276,259 @@ export function ActionItemList() {
     });
   }
 
-  if (error) {
+  /* ── Saved-view tabs config ──────────────────────────────── */
+  const VIEW_TABS: { key: SavedView; label: string; count: number; accent?: string }[] = [
+    { key: "all", label: "All", count: viewCounts.all },
+    { key: "overdue", label: "Overdue", count: viewCounts.overdue, accent: "var(--dash-red)" },
+    { key: "high", label: "High priority", count: viewCounts.high },
+    { key: "due-week", label: "Due this week", count: viewCounts.dueWeek },
+  ];
+
+  /* ── Filter pill configs ─────────────────────────────────── */
+  const TYPE_OPTIONS = Object.entries(TASK_TYPE_LABELS).map(([k, v]) => ({ value: Number(k), label: v }));
+  const PRIORITY_OPTIONS = Object.entries(PRIORITY_LABELS).map(([k, v]) => ({ value: Number(k), label: v }));
+  const STATUS_OPTIONS = Object.entries(STATUS_LABELS).map(([k, v]) => ({ value: Number(k), label: v }));
+
+  /* ── Loading skeleton ────────────────────────────────────── */
+  if (isLoading) {
     return (
-      <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-destructive">
-        Failed to load action items: {error.message}
+      <div
+        style={{
+          fontFamily: "'Inter', sans-serif",
+          background: "var(--dash-bg)",
+          color: "var(--dash-ink-1)",
+          minHeight: "100%",
+        }}
+      >
+        <ActionItemsToolbar search="" onSearchChange={() => {}} onNewItem={() => {}} />
+        <div className="flex flex-col gap-2 p-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-10 rounded-md animate-pulse"
+              style={{ background: "var(--dash-surface-2)" }}
+            />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-          <ClipboardList className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Action Items</h1>
-          <p className="text-sm text-muted-foreground">Track and manage your tasks</p>
-        </div>
-      </div>
+    <div
+      style={{
+        fontFamily: "'Inter', sans-serif",
+        background: "var(--dash-bg)",
+        color: "var(--dash-ink-1)",
+        minHeight: "100%",
+      }}
+    >
+      {/* Toolbar */}
+      <ActionItemsToolbar
+        search={search}
+        onSearchChange={setSearch}
+        onNewItem={() => setCreateOpen(true)}
+      />
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search action items..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
+      {/* Saved-view tabs */}
+      <div
+        className="flex items-center gap-0.5 px-[18px]"
+        style={{ borderBottom: "1px solid var(--dash-border)", background: "var(--dash-bg)" }}
+      >
+        {VIEW_TABS.map((tab) => {
+          const isActive = activeView === tab.key;
+          return (
             <button
+              key={tab.key}
               type="button"
-              onClick={() => setTypeFilter(null)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                typeFilter === null
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
+              onClick={() => { setActiveView(tab.key); setSelectedIds(new Set()); }}
+              className="relative inline-flex items-center gap-1.5 px-3 py-2 text-[12px] font-medium cursor-pointer border-0 bg-transparent"
+              style={{
+                fontFamily: "inherit",
+                color: isActive ? "var(--dash-ink-1)" : "var(--dash-ink-3)",
+              }}
             >
-              All
-            </button>
-            <button
-              type="button"
-              onClick={() => setTypeFilter(468510001)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                typeFilter === 468510001
-                  ? "border-red-500 bg-red-500 text-white"
-                  : "border-red-200 text-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-950/60 dark:border-red-800",
-              )}
-            >
-              <Briefcase className="h-3 w-3" />
-              Work
-            </button>
-            <button
-              type="button"
-              onClick={() => setTypeFilter(468510000)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                typeFilter === 468510000
-                  ? "border-blue-500 bg-blue-500 text-white"
-                  : "border-blue-200 text-blue-500 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:border-blue-800",
-              )}
-            >
-              <House className="h-3 w-3" />
-              Personal
-            </button>
-            <button
-              type="button"
-              onClick={() => setTypeFilter(468510002)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                typeFilter === 468510002
-                  ? "border-fuchsia-500 bg-fuchsia-500 text-white"
-                  : "border-fuchsia-200 text-fuchsia-500 bg-fuchsia-50 hover:bg-fuchsia-100 dark:bg-fuchsia-950/60 dark:border-fuchsia-800",
-              )}
-            >
-              <BookOpen className="h-3 w-3" />
-              Learning
-            </button>
-          </div>
-          <ViewToggle mode={viewMode} onChange={setViewMode} />
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Action Item
-          </Button>
-        </div>
-      </div>
-
-      {viewMode === "table" ? (
-        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="whitespace-nowrap">Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((_, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : filteredItems?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    {search || typeFilter !== null ? "No action items match your filters." : "No action items found. Create one to get started."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredItems?.map((item) => {
-                  const typeInfo = item.tdvsp_tasktype != null ? TASK_TYPE_ICON[item.tdvsp_tasktype] : null;
-                  const TypeIcon = typeInfo?.icon;
-                  return (
-                    <TableRow
-                      key={item.tdvsp_actionitemid}
-                      className="cursor-pointer"
-                      onClick={() => setViewItem(item)}
-                    >
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          {TypeIcon && <TypeIcon className="h-3.5 w-3.5 shrink-0" style={{ color: typeInfo.color }} />}
-                          {item.tdvsp_name}
-                        </div>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {item.tdvsp_priority != null ? (
-                          <Badge variant={priorityVariant(item.tdvsp_priority)}>
-                            {PRIORITY_LABELS[item.tdvsp_priority]}
-                          </Badge>
-                        ) : "\u2014"}
-                      </TableCell>
-                      <TableCell>
-                        {item.tdvsp_taskstatus != null ? (
-                          <Badge variant={statusVariant(item.tdvsp_taskstatus)}>
-                            {STATUS_LABELS[item.tdvsp_taskstatus]}
-                          </Badge>
-                        ) : "\u2014"}
-                      </TableCell>
-                      <TableCell>
-                        {item.tdvsp_date
-                          ? new Date(item.tdvsp_date).toLocaleDateString()
-                          : "\u2014"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setEditItem(item)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setDeleteItem(item)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      ) : isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader><Skeleton className="h-5 w-3/4" /></CardHeader>
-              <CardContent className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : filteredItems?.length === 0 ? (
-        <div className="text-center text-muted-foreground py-8">
-          {search || typeFilter !== null ? "No action items match your filters." : "No action items found. Create one to get started."}
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredItems?.map((item) => {
-            const colorIdx = priorityToColorIndex(item.tdvsp_priority);
-            const typeInfo = item.tdvsp_tasktype != null ? TASK_TYPE_ICON[item.tdvsp_tasktype] : null;
-            const TypeIcon = typeInfo?.icon;
-            return (
-              <Card
-                key={item.tdvsp_actionitemid}
-                className={cn("group cursor-pointer transition-shadow hover:shadow-md", tileBgClass(colorIdx))}
-                onClick={() => setViewItem(item)}
+              {tab.label}
+              <span
+                className="text-[10px] px-1.5 py-[1px] rounded-full font-medium"
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  background: tab.accent && tab.count > 0 ? tab.accent : "var(--dash-surface-2)",
+                  color: tab.accent && tab.count > 0 ? "#fff" : "var(--dash-ink-4)",
+                }}
               >
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                  <CardTitle className="text-base font-semibold flex items-center gap-2">
-                    {TypeIcon && <TypeIcon className="h-4 w-4 shrink-0" style={{ color: typeInfo.color }} />}
-                    {item.tdvsp_name}
-                  </CardTitle>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    <TileColorDots
-                      activeIndex={colorIdx}
-                      onChange={(idx) => {
-                        updateMutation.mutate({
-                          id: item.tdvsp_actionitemid,
-                          fields: { tdvsp_priority: COLOR_TO_PRIORITY[idx] } as never,
-                        });
-                      }}
-                    />
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditItem(item)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteItem(item)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  <div className="flex flex-wrap gap-2">
-                    {item.tdvsp_priority != null && (
-                      <Badge variant={priorityVariant(item.tdvsp_priority)}>
-                        {PRIORITY_LABELS[item.tdvsp_priority]}
-                      </Badge>
-                    )}
-                    {item.tdvsp_taskstatus != null && (
-                      <Badge variant={statusVariant(item.tdvsp_taskstatus)}>
-                        {STATUS_LABELS[item.tdvsp_taskstatus]}
-                      </Badge>
-                    )}
-                  </div>
-                  {item.tdvsp_date && (
-                    <div className="text-muted-foreground">
-                      {new Date(item.tdvsp_date).toLocaleDateString()}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                {tab.count}
+              </span>
+              {/* Active indicator */}
+              {isActive && (
+                <div
+                  className="absolute bottom-0 left-2 right-2 h-[2px] rounded-t"
+                  style={{ background: "var(--dash-ink-1)" }}
+                />
+              )}
+            </button>
+          );
+        })}
+        {/* Save view (visual-only) */}
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 px-2.5 py-2 text-[11px] font-medium cursor-pointer border-0 bg-transparent"
+          style={{ fontFamily: "inherit", color: "var(--dash-ink-4)" }}
+        >
+          + Save view
+        </button>
+      </div>
 
+      {/* Subtoolbar: filter pills + density + count */}
+      <div
+        className="flex items-center gap-2 px-[18px] py-2"
+        style={{ borderBottom: "1px solid var(--dash-border)", background: "var(--dash-bg)" }}
+      >
+        {/* Group by Account toggle */}
+        <FilterPill
+          active={groupByAccount}
+          onClick={() => setGroupByAccount((g) => !g)}
+        >
+          <Filter className="h-3 w-3" />
+          Group by Account
+        </FilterPill>
+
+        {/* Type filter */}
+        <DropdownPill
+          label="Type"
+          options={TYPE_OPTIONS}
+          value={typeFilter}
+          onChange={setTypeFilter}
+        />
+
+        {/* Priority filter */}
+        <DropdownPill
+          label="Priority"
+          options={PRIORITY_OPTIONS}
+          value={priorityFilter}
+          onChange={setPriorityFilter}
+        />
+
+        {/* Status filter */}
+        <DropdownPill
+          label="Status"
+          options={STATUS_OPTIONS}
+          value={statusFilter}
+          onChange={setStatusFilter}
+        />
+
+        {/* Add filter (visual-only) */}
+        <FilterPill dashed>
+          <Plus className="h-3 w-3" />
+          Add filter
+        </FilterPill>
+
+        <div className="flex-1" />
+
+        {/* Density toggle */}
+        <div
+          className="inline-flex h-7 rounded-md p-0.5"
+          style={{
+            background: "var(--dash-surface)",
+            border: "1px solid var(--dash-border-strong)",
+          }}
+        >
+          <button
+            type="button"
+            className="h-[22px] px-2 rounded text-[11px] font-medium border-0 cursor-pointer inline-flex items-center gap-[4px]"
+            style={{
+              fontFamily: "inherit",
+              background: density === "compact" ? "var(--dash-ink-1)" : "transparent",
+              color: density === "compact" ? "#fff" : "var(--dash-ink-3)",
+            }}
+            onClick={() => {
+              setDensity("compact");
+              try { localStorage.setItem("action-items-density", "compact"); } catch { /* noop */ }
+            }}
+          >
+            <Rows4 className="h-[11px] w-[11px]" />
+            Compact
+          </button>
+          <button
+            type="button"
+            className="h-[22px] px-2 rounded text-[11px] font-medium border-0 cursor-pointer inline-flex items-center gap-[4px]"
+            style={{
+              fontFamily: "inherit",
+              background: density === "rich" ? "var(--dash-ink-1)" : "transparent",
+              color: density === "rich" ? "#fff" : "var(--dash-ink-3)",
+            }}
+            onClick={() => {
+              setDensity("rich");
+              try { localStorage.setItem("action-items-density", "rich"); } catch { /* noop */ }
+            }}
+          >
+            <Rows3 className="h-[11px] w-[11px]" />
+            Rich
+          </button>
+        </div>
+
+        {/* Count */}
+        <span
+          className="text-[11px] font-medium"
+          style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            color: "var(--dash-ink-4)",
+          }}
+        >
+          {allVisibleIds.length} items
+        </span>
+      </div>
+
+      {/* Table */}
+      <ActionItemsTable
+        groups={groups}
+        sortColumn={sortColumn}
+        sortDir={sortDir}
+        onSortChange={handleSortChange}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
+        onToggleSelectAll={toggleSelectAll}
+        allSelected={allSelected}
+        density={density}
+        onEdit={setEditItem}
+        onDelete={setDeleteItem}
+        onView={setViewItem}
+        grouped={groupByAccount}
+      />
+
+      {/* Bulk action bar */}
+      <BulkActionBar
+        count={selectedIds.size}
+        onMarkComplete={handleBulkComplete}
+        onDelete={handleBulkDelete}
+        onClear={() => setSelectedIds(new Set())}
+      />
+
+      {/* Dialogs */}
       <ActionItemFormDialog
         open={createOpen}
-        onOpenChange={(o) => { setCreateOpen(o); if (!o) setCreateTaskType(undefined); }}
+        onOpenChange={(o) => {
+          setCreateOpen(o);
+          if (!o) setCreateTaskType(undefined);
+        }}
         mode="create"
         defaultTaskType={createTaskType}
       />
 
       <ActionItemFormDialog
         open={!!editItem}
-        onOpenChange={(open) => { if (!open) setEditItem(null); }}
+        onOpenChange={(open) => {
+          if (!open) setEditItem(null);
+        }}
         mode="edit"
         actionItem={editItem ?? undefined}
       />
 
       <ActionItemDetailDialog
         open={!!viewItem}
-        onOpenChange={(open) => { if (!open) setViewItem(null); }}
+        onOpenChange={(open) => {
+          if (!open) setViewItem(null);
+        }}
         actionItem={viewItem ?? undefined}
         onEdit={(item) => {
           setViewItem(null);
@@ -374,11 +538,126 @@ export function ActionItemList() {
 
       <ActionItemDeleteDialog
         open={!!deleteItem}
-        onOpenChange={(open) => { if (!open) setDeleteItem(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteItem(null);
+        }}
         itemName={deleteItem?.tdvsp_name ?? ""}
         onConfirm={handleDelete}
         isDeleting={deleteMutation.isPending}
       />
+    </div>
+  );
+}
+
+/* ── Sub-components ─────────────────────────────────────────── */
+
+function FilterPill({
+  children,
+  active,
+  dashed,
+  onClick,
+}: {
+  children: React.ReactNode;
+  active?: boolean;
+  dashed?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1.5 h-[26px] px-2.5 rounded-md text-[11px] font-medium cursor-pointer border"
+      style={{
+        fontFamily: "inherit",
+        background: active ? "var(--dash-ink-1)" : "var(--dash-surface)",
+        color: active ? "#fff" : "var(--dash-ink-2)",
+        borderColor: active ? "var(--dash-ink-1)" : "var(--dash-border-strong)",
+        borderStyle: dashed ? "dashed" : "solid",
+      }}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+function DropdownPill({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: number; label: string }[];
+  value: number | null;
+  onChange: (v: number | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const activeLabel = value !== null ? options.find((o) => o.value === value)?.label : null;
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 h-[26px] px-2.5 rounded-md text-[11px] font-medium cursor-pointer border"
+        style={{
+          fontFamily: "inherit",
+          background: value !== null ? "var(--dash-ink-1)" : "var(--dash-surface)",
+          color: value !== null ? "#fff" : "var(--dash-ink-2)",
+          borderColor: value !== null ? "var(--dash-ink-1)" : "var(--dash-border-strong)",
+        }}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span
+          className="text-[10px] uppercase tracking-[0.06em] font-medium"
+          style={{ color: value !== null ? "rgba(255,255,255,.6)" : "var(--dash-ink-4)" }}
+        >
+          {label}
+        </span>
+        {activeLabel && <span>{activeLabel}</span>}
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div
+            className="absolute top-full left-0 mt-1 z-50 rounded-lg py-1 min-w-[140px]"
+            style={{
+              background: "var(--dash-surface)",
+              border: "1px solid var(--dash-border-strong)",
+              boxShadow: "var(--dash-shadow-sm)",
+            }}
+          >
+            {/* All option */}
+            <button
+              type="button"
+              className="w-full text-left px-3 py-1.5 text-[12px] font-medium border-0 cursor-pointer"
+              style={{
+                fontFamily: "inherit",
+                background: value === null ? "var(--dash-surface-2)" : "transparent",
+                color: "var(--dash-ink-1)",
+              }}
+              onClick={() => { onChange(null); setOpen(false); }}
+            >
+              All
+            </button>
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className="w-full text-left px-3 py-1.5 text-[12px] font-medium border-0 cursor-pointer"
+                style={{
+                  fontFamily: "inherit",
+                  background: value === opt.value ? "var(--dash-surface-2)" : "transparent",
+                  color: "var(--dash-ink-1)",
+                }}
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
