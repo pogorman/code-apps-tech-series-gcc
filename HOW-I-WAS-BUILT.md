@@ -607,3 +607,36 @@ All changes in `src/components/layout/app-layout.tsx`.
 - **Recharts `onClick` on a `Bar` gets the datum, not a DOM event** — the second arg is the chart click state. `onClick={(entry) => onBarClick(entry.label)}` is the clean pattern; typing it as `(entry: PriorityDatum)` works because Recharts narrows the payload to your data type.
 - **Cap per-card stagger on lists that can grow.** `Math.min(index, 12) * 0.035` keeps the total entrance under ~420ms no matter how many cards — important for the work column in the board, which can easily hit 20+ items.
 - **Stock chunk-size warnings are not a bug to fix in a UI PR.** The `> 500 kB` warning is Vite's default threshold; for an enterprise SPA with recharts + framer-motion + shadcn + TanStack Query, 1.2MB (346KB gzipped) is fine. Revisit with `manualChunks` only if the demo ever starts feeling slow on first paint.
+
+## Phase 25 — Dashboard Redesign: Stripe/Retool Style
+
+**Prompt:** "Implement the dashboard redesign plan — Stripe/Retool style with decomposed sub-components, pure SVG/CSS charts, FocusStrip, semantic colors, Inter font, and dark mode support."
+
+**Why:** The Phase 24 glassmorphism dashboard with Framer Motion and Recharts was visually polished but didn't match the dense, data-forward Stripe/Retool aesthetic defined in the design brief (`inbox/My Work Dashboard.html`). The 1025-line monolithic `dashboard.tsx` was also hard to maintain. The redesign brings a cleaner visual language (flat surfaces, 1px borders, Inter font, semantic color usage) and a properly decomposed component architecture.
+
+**What happened:**
+
+1. **Added Inter font** (`index.html`) — Google Fonts CDN link for Inter 400/500/600/700. Scoped to the dashboard container via inline `fontFamily`; body stays JetBrains Mono.
+
+2. **Added `--dash-*` CSS custom properties** (`src/index.css`) — Full set of dashboard-specific design tokens for both `:root` (light) and `.dark` (dark): surface colors, border colors, ink colors (4 levels), semantic colors (blue, green, amber, red, violet, pink, cyan, slate), tint backgrounds, and shadow scales. Also added `@keyframes dash-pulse` for the FocusStrip's pulsing dot. Separate from the app's existing shadcn/ui HSL variables.
+
+3. **Created `dashboard-tokens.ts`** — Shared types (`ActionItem`, `Drilldown`, `DashboardStats`, `StatusDatum`, `PriorityDatum`, `TypeDatum`, `AccountDatum`) and semantic color maps (`STATUS_COLORS`, `PRIORITY_COLORS`, `TYPE_COLORS`, `ACCOUNT_PALETTE`) using CSS variable references.
+
+4. **Created 7 sub-components:**
+   - `page-header.tsx` — Icon tile + eyebrow + h1 + segmented time control + buttons (visual-only)
+   - `focus-strip.tsx` — Dark gradient band, top 3 urgent items, pulse dot, CTA
+   - `kpi-card.tsx` — 4 variants: total (sparkline), rate (ratio bar), progress (histogram), high (stacked bar)
+   - `status-breakdown.tsx` — SVG donut (r=48) + center total + "+N wk" delta + side list; exports `CardShell`
+   - `priority-distribution.tsx` — 18px CSS bars with inline white text + dashed footer
+   - `task-types.tsx` — 8px stacked composition bar + individual rows
+   - `items-by-account.tsx` — Avatar initials + stacked status bars per account + legend
+
+5. **Rewrote `dashboard.tsx`** — 1025 → ~225 lines. Centralized stats computation (including per-account status breakdown and week-over-week delta). Removed Framer Motion, Recharts, glassmorphism.
+
+**Files changed:** `index.html`, `src/index.css`, `src/components/dashboard/dashboard.tsx`
+**Files created:** 8 new files under `src/components/dashboard/`
+
+**Key lessons:**
+- **CSS custom properties beat Tailwind classes for a localized design system.** The `--dash-*` vars give the dashboard its own visual language without conflicting with shadcn/ui's HSL variables.
+- **Per-account status breakdown requires a two-level bucket.** `Map<accountName, Map<statusLabel, count>>` — compute once, pass as `statusBreakdown` on each `AccountDatum`.
+- **`createdon` isn't in generated types** but exists at runtime. Access via double-cast: `(item as unknown as Record<string, string>).createdon`.

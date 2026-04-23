@@ -18,19 +18,29 @@ Dark mode inverts all colors: dark backgrounds, light text, and adjusted accent 
 
 ## Dashboard
 
-The Dashboard is the home view, showing action item analytics. KPI cards and chart panels use a glassmorphism surface (frosted blur, soft inset highlight, accent corner glow) and rise in with a subtle Framer Motion fade-up on load — header first, then KPIs, then chart cards. Animations are deliberately short (~450ms) so the page doesn't feel slow.
+The Dashboard is the home view, showing action item analytics in a dense, data-forward Stripe/Retool-inspired layout. It uses the Inter font for readability and semantic color coding throughout (status: slate/blue/amber/red/violet/green; priority: blue/slate/amber/red). All charts are pure SVG or CSS — no chart library on this page.
 
-### KPI Cards (top row)
+### Page Header
 
-Four summary cards: Total Items, Completion Rate, In Progress, and High/Top Priority. Each card has a colored left accent border, a subtle glow, and an icon in a tinted glass badge. Hover any card to see a frosted-glass tooltip with item count and first 4 item names. Click to open a drilldown table showing all matching action items.
+Icon tile + "Insights at a glance" eyebrow + "Action Items" heading. Right side has a segmented time control (7D / **30D** / 90D / All), Filters button, Export button, and New Item button. These controls are visual-only for now.
 
-### Charts (bottom row)
+### Focus Strip
 
-Four chart panels: Status Breakdown (SVG donut with background track ring), Priority Distribution (**Recharts** animated horizontal bars, one per priority, with rounded ends and count labels), Task Types (segmented overview bar + per-type icons and progress bars), and Items by Account (progress bars). Each panel has a colored accent line at the top and a vertical bar indicator next to the section title.
+A dark gradient band below the header showing up to 3 urgent items that need attention. Items qualify if their priority is High or Top Priority, OR their due date is today or tomorrow (excluding complete items). Each item shows a priority-colored left bar, title, due date, and priority label. A pulsing pink dot and "Focus for today" eyebrow draw attention. The "Start focus session" CTA button is visual-only. The strip hides automatically when there are no qualifying items.
 
-**Priority bars:** Hover any bar to see an interactive Recharts tooltip (rendered in the same glass popover style as the rest of the dashboard) showing the priority label, exact count, and a "Click bar to drill down" hint. Click a bar to open the full drilldown dialog for that priority — same behavior as clicking any other dashboard element.
+### KPI Cards
 
-Every other chart sub-element is independently hoverable and clickable: hover for a frosted-glass tooltip preview, click for a full drilldown table.
+Four summary cards in a row: **Total Items** (with a decorative SVG sparkline and week-over-week trend chip), **Completion Rate** (with a ratio bar showing done vs open + legend), **In Progress** (with a decorative SVG histogram), and **High / Top Priority** (with a stacked priority bar + legend showing all 4 priority levels). Each card has a tinted icon badge, large value, and subtitle. Click any card to open a drilldown table.
+
+### Charts (two rows of two)
+
+**Row 1:**
+- **Status Breakdown** — SVG donut (r=48) with center total count and a "+N wk" green chip showing items created this week. Side list shows each status with a color swatch, mini bar scaled to the max count, count, and percentage. Click any status row to drill down.
+- **Priority Distribution** — Full-width 18px CSS bars with inline white count text. Each bar is scaled to the max count. A dashed footer shows the combined High + Top Priority count and percentage. Click any bar to drill down.
+
+**Row 2:**
+- **Task Types** — An 8px stacked composition bar showing the proportion of each type, followed by individual rows with color swatch, name, progress bar, count, and percentage. Click any row to drill down.
+- **Items by Account** — Each account row shows an avatar (initials on a colored background), name, a stacked horizontal bar colored by status breakdown (not single-color), and total count. A dashed-line status legend appears below. Click any row to drill down.
 
 ### Drilldown Dialog
 

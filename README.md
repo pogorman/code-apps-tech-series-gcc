@@ -43,10 +43,11 @@ Open the URL from `pac code run` (not Vite directly) — it wraps the app in the
 |-------|------|
 | Framework | React 19 + TypeScript 5.9 |
 | Build | Vite 7 |
-| Styling | Tailwind CSS v4 + shadcn/ui (Microsoft Fluent Design theme, light/dark mode, glassmorphism on dashboard/board) |
+| Styling | Tailwind CSS v4 + shadcn/ui (Microsoft Fluent Design theme, light/dark mode, Stripe/Retool dashboard aesthetic, glassmorphism on board) |
 | Data | TanStack Query + generated Dataverse services |
-| Charts | Recharts (animated priority distribution bars with interactive tooltips) |
-| Motion | Framer Motion (subtle entrance animations on dashboard cards, chart panels, kanban columns and cards) |
+| Charts | Pure SVG/CSS charts on dashboard (donut, sparkline, bars), Recharts on board |
+| Motion | Framer Motion (subtle entrance animations on kanban columns and cards) |
+| Font | Inter (dashboard), JetBrains Mono (rest of app) via Google Fonts |
 | State | Zustand |
 | Icons | Lucide React |
 | Toasts | Sonner |
@@ -67,7 +68,7 @@ src/
     meeting-summaries/# Meeting Summary CRUD components
     ideas/            # Idea CRUD components
     projects/         # Project CRUD components
-    dashboard/        # Analytics dashboard (glassmorphism KPI + chart cards, Framer Motion entrances, SVG donut, Recharts priority bars with tooltips) + Kanban board view (glassmorphism columns + cards, Framer Motion entrance with capped stagger, 4-column drag-and-drop, clickable cards, custom collision detection, accent-glow drop highlights)
+    dashboard/        # Analytics dashboard (Stripe/Retool design: decomposed into 8 sub-components — page-header, focus-strip, kpi-card, status-breakdown, priority-distribution, task-types, items-by-account, dashboard-tokens; pure SVG/CSS charts, Inter font, --dash-* CSS vars for light/dark) + Kanban board view (glassmorphism columns + cards, Framer Motion entrance with capped stagger, 4-column drag-and-drop, clickable cards, custom collision detection, accent-glow drop highlights)
     layout/           # App shell (collapsible left sidebar with colored nav icons + quick create bar with task-type presets + dark mode toggle)
     command-palette.tsx # Global Ctrl+K search
   stores/             # Zustand stores (quick create)

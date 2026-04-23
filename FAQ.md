@@ -62,22 +62,23 @@ Hover any dashboard tile (KPI card or chart sub-element) to see a tooltip previe
 
 ## How does the Priority Distribution chart work?
 
-As of Phase 24 it's a **Recharts** `BarChart` (vertical layout — horizontal bars, one per priority) inside a `ResponsiveContainer`, in `src/components/dashboard/dashboard.tsx`. One `Cell` per priority color, rounded corners via `radius={[6,6,6,6]}`, entrance animation `isAnimationActive` at 750ms ease-out, and a `LabelList` rendering the count at the right end of each bar. The Y-axis tick text inherits `currentColor` with `fillOpacity: 0.65` so the same chart works in both light and dark mode.
+As of Phase 25 it's a **pure CSS** horizontal bar chart in `src/components/dashboard/priority-distribution.tsx`. Each priority gets an 18px-tall bar with rounded corners, scaled to the max count across all priorities. If the bar is wide enough (>15%), the count is rendered inline as white text inside the bar; otherwise the count appears in a separate column to the right. A dashed footer line separates the bars from a "High + Top Priority" summary showing the combined urgent count and percentage.
 
-Hovering a bar shows a custom `PriorityTooltipContent` component (rendered in the same glass-popover style as the rest of the dashboard) with the priority label, exact count, item/items pluralization, and a "Click bar to drill down" hint. Clicking a bar fires the same drilldown dialog used by the other dashboard elements — the `Bar` has `onClick={(entry: PriorityDatum) => onBarClick(entry.label)}` which maps back to `filterByPriority()` and calls `openDrilldown()`.
+Clicking any bar row fires the same drilldown dialog used by the other dashboard elements — the `onClick` handler maps the label back to `filterByPriority()` via `PRIORITY_KEY_BY_LABEL` and calls `openDrilldown()`.
 
-Recharts passes the datum (not a DOM event) as the `onClick` payload, so typing it as your own `PriorityDatum` interface is the clean pattern. This replaced the older hand-rolled `HBar` component, which has been removed along with the `priorityMax` memo (Recharts scales its own X axis).
+This replaced the earlier Recharts `BarChart` from Phase 24 as part of the Stripe/Retool dashboard redesign. Recharts remains in `package.json` for potential use elsewhere but is no longer used on the dashboard.
 
 ## Where is the glassmorphism styling defined?
 
-In two class tokens at the top of the dashboard/board files:
+Glassmorphism is now used only on the **Board** (kanban view), not on the dashboard:
 
-- **`GLASS_CARD`** (`src/components/dashboard/dashboard.tsx`) — used on KPI and chart cards. A light-to-dark white-alpha gradient (`from-white/75 via-white/55 to-white/35` in light mode, `from-white/[0.06] via-white/[0.03] to-white/[0.01]` in dark) layered over `backdrop-blur-xl`, with a `white/50` border and a two-layer shadow (inset highlight + outer lift).
 - **`GLASS_COLUMN`** and **`GLASS_CARD_SURFACE`** (`src/components/dashboard/board-dashboard.tsx`) — a deeper multi-stop gradient + `backdrop-blur-xl` for column containers, and a lighter `backdrop-blur-md` + inset shadow for the cards floating on top of the column.
 
-Applied via `cn(GLASS_CARD, ...)`. `tailwind-merge` resolves the override cleanly against the base shadcn `Card`'s `bg-card` class — no need to build a dedicated glass variant at the primitive level.
-
 The sticky column header on the board uses a stronger `backdrop-blur-2xl` at `bg-white/55 dark:bg-background/55` so it stays legible over scrolling content.
+
+## What happened to the glassmorphism dashboard?
+
+Phase 25 replaced the glassmorphism dashboard with a Stripe/Retool-inspired design. The dashboard now uses flat white surfaces (`var(--dash-surface)`), 1px borders (`var(--dash-border)`), Inter font, and semantic color coding instead of frosted-glass effects. Dashboard-specific CSS custom properties (`--dash-*`) live in `index.css` under `:root` and `.dark` — separate from the app's shadcn/ui HSL variables. The 1025-line monolithic file was decomposed into 8 sub-components. A new FocusStrip component shows urgent items in a dark gradient band at the top. The KPI cards now include decorative SVG sparklines/histograms and week-over-week trend chips. Account rows show stacked status-colored bars instead of single-color bars.
 
 ## How does the "Extract Action Items with AI" feature work?
 
@@ -186,11 +187,11 @@ No. GCC moderate Power Platform uses **commercial Azure AD** (`login.microsofton
 
 Click the small chevron button floating on the sidebar's right edge. The sidebar collapses from 208px to a 56px icon-only rail. Hover any icon to see a tooltip with the page name. Click the chevrons again to expand. Your preference persists in `localStorage` under the key `sidebar-collapsed`.
 
-## Why do dashboard tiles animate on load?
+## Why do board tiles animate on load?
 
-The dashboard and board now use **Framer Motion** (`framer-motion@12.23.12`) for entrance animations. A shared `MOTION_RISE` variant (`opacity 0→1, y 14→0`, 450ms, `cubic-bezier(0.16, 1, 0.3, 1)`) is applied to the page header, KPI cards, and chart panels via `motion.div` wrappers, with staggered `transition.delay` values so the cards cascade in. The board uses the same pattern for columns and a shorter `CARD_MOTION` variant (320ms, `y 6→0`) for the per-card entrance inside each column. The per-card delay is capped at `min(index, 12) * 0.035s` so long work columns don't have a long "piano roll" tail on mount.
+The board uses **Framer Motion** (`framer-motion@12.23.12`) for entrance animations. A shared `MOTION_RISE` variant (`opacity 0→1, y 14→0`, 450ms, `cubic-bezier(0.16, 1, 0.3, 1)`) is applied to column wrappers, and a shorter `CARD_MOTION` variant (320ms, `y 6→0`) is used for the per-card entrance inside each column. The per-card delay is capped at `min(index, 12) * 0.035s` so long work columns don't have a long "piano roll" tail on mount.
 
-The older hand-rolled `dashRise` CSS keyframe was replaced in Phase 24 — both it and the inline `<style>` tags that drove it have been removed from `dashboard.tsx` and `board-dashboard.tsx`.
+The dashboard (as of Phase 25) does not use Framer Motion — it renders instantly with no entrance animation, matching the Stripe/Retool aesthetic of immediate data visibility.
 
 ## What ports does local dev use?
 

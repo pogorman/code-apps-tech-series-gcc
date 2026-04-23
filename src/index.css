@@ -90,4 +90,71 @@
     @apply bg-background text-foreground antialiased;
     font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", "Consolas", ui-monospace, monospace;
   }
+
+  /* ── Dashboard design tokens (Stripe/Retool aesthetic) ────────── */
+  :root {
+    --dash-bg: #fafafa;
+    --dash-surface: #ffffff;
+    --dash-surface-2: #f5f5f6;
+    --dash-border: #ececee;
+    --dash-border-strong: #dcdce0;
+    --dash-ink-1: #0b0b0f;
+    --dash-ink-2: #3a3a42;
+    --dash-ink-3: #6b6b76;
+    --dash-ink-4: #9a9aa4;
+
+    --dash-blue: #3b82f6;
+    --dash-green: #22c55e;
+    --dash-amber: #f59e0b;
+    --dash-red: #ef4444;
+    --dash-violet: #8b5cf6;
+    --dash-pink: #ec4899;
+    --dash-cyan: #06b6d4;
+    --dash-slate: #64748b;
+
+    --dash-t-blue: #eff6ff;
+    --dash-t-green: #ecfdf5;
+    --dash-t-amber: #fffbeb;
+    --dash-t-red: #fef2f2;
+    --dash-t-violet: #f5f3ff;
+
+    --dash-shadow-xs: 0 1px 0 rgba(15,15,20,.04), 0 1px 2px rgba(15,15,20,.03);
+    --dash-shadow-sm: 0 1px 0 rgba(15,15,20,.04), 0 2px 6px rgba(15,15,20,.04);
+  }
+
+  .dark {
+    --dash-bg: #111116;
+    --dash-surface: #1a1a20;
+    --dash-surface-2: #222228;
+    --dash-border: #2a2a32;
+    --dash-border-strong: #3a3a44;
+    --dash-ink-1: #eeeef0;
+    --dash-ink-2: #c4c4cc;
+    --dash-ink-3: #8a8a96;
+    --dash-ink-4: #5a5a66;
+
+    --dash-blue: #60a5fa;
+    --dash-green: #4ade80;
+    --dash-amber: #fbbf24;
+    --dash-red: #f87171;
+    --dash-violet: #a78bfa;
+    --dash-pink: #f472b6;
+    --dash-cyan: #22d3ee;
+    --dash-slate: #94a3b8;
+
+    --dash-t-blue: rgba(59,130,246,.12);
+    --dash-t-green: rgba(34,197,94,.12);
+    --dash-t-amber: rgba(245,158,11,.12);
+    --dash-t-red: rgba(239,68,68,.12);
+    --dash-t-violet: rgba(139,92,246,.12);
+
+    --dash-shadow-xs: 0 1px 0 rgba(0,0,0,.15), 0 1px 2px rgba(0,0,0,.1);
+    --dash-shadow-sm: 0 1px 0 rgba(0,0,0,.15), 0 2px 6px rgba(0,0,0,.12);
+  }
+}
+
+@keyframes dash-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(244,114,182,.7); }
+  70% { box-shadow: 0 0 0 8px rgba(244,114,182,0); }
+  100% { box-shadow: 0 0 0 0 rgba(244,114,182,0); }
 }
