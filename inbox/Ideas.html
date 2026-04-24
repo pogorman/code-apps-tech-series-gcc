@@ -1,0 +1,1268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>My Work — Ideas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf9fb;
+    --surface: #ffffff;
+    --surface-2: #f5f3f7;
+    --surface-3: #ebe8ef;
+    --border: #ececee;
+    --border-strong: #dcdce0;
+    --ink-1: #0b0b0f;
+    --ink-2: #3a3a42;
+    --ink-3: #6b6b76;
+    --ink-4: #9a9aa4;
+    --brand: #5b2d8a;
+    --brand-2: #7a3fb5;
+    --idea: #eab308;
+    --idea-soft: #fefce8;
+    --c-blue:#3b82f6; --c-green:#22c55e; --c-amber:#f59e0b;
+    --c-red:#ef4444; --c-violet:#8b5cf6; --c-pink:#ec4899;
+    --c-cyan:#06b6d4; --c-slate:#64748b; --c-indigo:#6366f1;
+    --t-blue:#eff6ff; --t-green:#ecfdf5; --t-amber:#fffbeb;
+    --t-red:#fef2f2; --t-violet:#f5f3ff; --t-pink:#fdf2f8; --t-slate:#f1f5f9;
+    --t-cyan:#ecfeff; --t-indigo:#eef2ff; --t-yellow:#fefce8;
+    --radius:10px; --radius-sm:6px;
+    --shadow-xs:0 1px 0 rgba(15,15,20,.04),0 1px 2px rgba(15,15,20,.03);
+    --shadow-card: 0 1px 0 rgba(15,15,20,.03), 0 1px 2px rgba(15,15,20,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family:'Inter',-apple-system,system-ui,sans-serif;
+    font-size:13px; color:var(--ink-1); background:var(--bg);
+    -webkit-font-smoothing:antialiased; letter-spacing:-0.005em;
+    overflow:hidden;
+  }
+  .mono { font-family:'JetBrains Mono',ui-monospace,monospace; letter-spacing:0; }
+  .app { display:grid; grid-template-rows:44px 1fr; height:100vh; }
+
+  /* Topbar */
+  .topbar { background:var(--brand); color:#fff; display:flex; align-items:center; padding:0 12px; gap:14px; font-size:13px; font-weight:500; }
+  .topbar .apps-grid { width:28px; height:28px; display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); gap:2px; padding:4px; border-radius:6px; }
+  .topbar .apps-grid span { background:rgba(255,255,255,.85); border-radius:1px; }
+  .topbar .sep { width:1px; height:16px; background:rgba(255,255,255,.25); }
+  .topbar .app-name { opacity:.9; }
+  .topbar .spacer { flex:1; }
+  .topbar .pill { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 10px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.2); border-radius:6px; font-size:12px; cursor:pointer; }
+  .topbar .icon-btn { width:28px; height:28px; display:grid; place-items:center; border-radius:6px; cursor:pointer; opacity:.85; }
+  .topbar .icon-btn:hover { background:rgba(255,255,255,.12); opacity:1; }
+  .topbar .avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#f5b17b,#c86a3d); border:1.5px solid rgba(255,255,255,.35); }
+
+  .body { display:grid; grid-template-columns:220px 1fr; min-height:0; }
+
+  /* Sidebar */
+  .sidebar { background:var(--surface); border-right:1px solid var(--border); padding:10px 8px; display:flex; flex-direction:column; gap:4px; font-size:13px; overflow-y:auto; }
+  .sidebar .workspace { display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:6px; background:#eef2ff; color:#3730a3; border-radius:8px; font-weight:600; }
+  .sidebar .workspace .dot { width:18px; height:18px; border-radius:4px; background:#6366f1; display:grid; place-items:center; color:#fff; font-size:10px; font-weight:700; }
+  .sidebar .section-label { font-size:10px; font-weight:600; color:var(--ink-4); letter-spacing:0.08em; text-transform:uppercase; padding:12px 10px 4px; }
+  .sidebar .nav-item { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:6px; color:var(--ink-2); cursor:pointer; position:relative; }
+  .sidebar .nav-item:hover { background:var(--surface-2); }
+  .sidebar .nav-item.active { background:var(--surface-2); color:var(--ink-1); font-weight:600; }
+  .sidebar .nav-item.active::before { content:''; position:absolute; left:0; top:6px; bottom:6px; width:3px; border-radius:0 2px 2px 0; background:var(--brand-2); }
+  .sidebar .nav-item .ico { width:16px; height:16px; color:var(--ink-3); flex-shrink:0; }
+  .sidebar .nav-item.active .ico { color:var(--brand-2); }
+  .sidebar .nav-item .count { margin-left:auto; font-size:11px; color:var(--ink-4); font-variant-numeric:tabular-nums; }
+  .sidebar .footer { margin-top:auto; padding:8px 10px; display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--border); font-size:12px; color:var(--ink-3); }
+  .sidebar .kbd { font-family:'JetBrains Mono',monospace; font-size:10px; padding:1px 5px; background:var(--surface-2); border:1px solid var(--border); border-radius:3px; color:var(--ink-3); }
+  .sidebar .footer-row { display:flex; align-items:center; gap:8px; }
+
+  .main { display:grid; grid-template-rows:auto auto auto 1fr; min-height:0; overflow:hidden; }
+
+  /* Quick create */
+  .quick-create { display:flex; align-items:center; gap:8px; padding:10px 18px 4px; flex-wrap:wrap; }
+  .qc-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-4); margin-right:4px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 9px; border-radius:999px; background:var(--surface); border:1px solid var(--border-strong); font-size:11px; font-weight:500; color:var(--ink-2); cursor:pointer; }
+  .chip .ico { width:12px; height:12px; }
+  .chip.work{color:#ea580c;background:#fff7ed;border-color:#fed7aa}
+  .chip.personal{color:#db2777;background:#fdf2f8;border-color:#fbcfe8}
+  .chip.learning{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
+  .chip.idea{color:#ca8a04;background:#fefce8;border-color:#fde68a}
+  .chip.meeting{color:#0891b2;background:#ecfeff;border-color:#a5f3fc}
+  .chip.project{color:#2563eb;background:#eff6ff;border-color:#bfdbfe}
+  .chip.account{color:#059669;background:#ecfdf5;border-color:#a7f3d0}
+  .chip.contact{color:#4f46e5;background:#eef2ff;border-color:#c7d2fe}
+
+  /* Title & hero strip (lighter, more exploratory) */
+  .hero {
+    padding: 10px 18px 14px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .hero-row { display: flex; align-items: center; gap: 14px; }
+  .hero-tile {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: linear-gradient(135deg, #fef9c3, #fde68a);
+    color: #a16207;
+    display: grid; place-items: center;
+    border: 1px solid #fde68a;
+  }
+  .hero h1 {
+    margin: 0;
+    font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+  }
+  .hero .sub {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-4);
+  }
+  .hero .spacer { flex: 1; }
+  .hero .stats {
+    display: flex; gap: 18px;
+    font-size: 11px; color: var(--ink-3);
+  }
+  .hero .stats b {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 19px; color: var(--ink-1); font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .hero .stats .stat-label {
+    text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: 10px; font-weight: 500;
+  }
+
+  /* Category distribution mini-chart */
+  .cat-strip {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+  }
+  .cat-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .cat-pill:hover { background: var(--surface-2); }
+  .cat-pill.on {
+    background: var(--ink-1); color: #fff; border-color: var(--ink-1);
+  }
+  .cat-pill.on .cat-dot { box-shadow: 0 0 0 2px rgba(255,255,255,.2); }
+  .cat-pill .cat-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .cat-pill .cat-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 600;
+    color: var(--ink-3);
+  }
+  .cat-pill.on .cat-count { color: rgba(255,255,255,.6); }
+
+  /* Buttons */
+  .btn { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:7px; background:var(--surface); border:1px solid var(--border-strong); font-size:12px; font-weight:500; color:var(--ink-2); cursor:pointer; }
+  .btn:hover { background:var(--surface-2); }
+  .btn.primary { background:var(--ink-1); color:#fff; border-color:var(--ink-1); }
+  .btn.idea-btn {
+    background: linear-gradient(135deg, #fde047, #facc15);
+    color: #713f12; border-color: #eab308;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(234,179,8,.3);
+  }
+  .btn.idea-btn:hover { background: linear-gradient(135deg, #facc15, #eab308); }
+  .btn .ico { width:13px; height:13px; }
+  .btn.icon-only { padding: 0; width: 30px; justify-content: center; }
+
+  /* Search (bigger, more prominent for capture feel) */
+  .capture-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 18px 10px;
+  }
+  .capture-box {
+    flex: 1;
+    display: flex; align-items: center; gap: 10px;
+    height: 36px;
+    padding: 0 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+  }
+  .capture-box input {
+    flex: 1; border: 0; outline: 0;
+    font-family: inherit; font-size: 13px; background: transparent;
+    color: var(--ink-1);
+  }
+  .capture-box input::placeholder { color: var(--ink-4); }
+  .capture-box .kbd { font-family:'JetBrains Mono',monospace; font-size:10px; padding:1px 5px; background:var(--surface-2); border:1px solid var(--border); border-radius:3px; color:var(--ink-4); }
+
+  /* Saved view tabs */
+  .views {
+    display: flex; align-items: flex-end;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--border);
+    gap: 2px;
+  }
+  .view-tab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 14px 9px;
+    font-size: 12px; font-weight: 500;
+    color: var(--ink-3); cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-radius: 7px 7px 0 0;
+    margin-bottom: -1px;
+  }
+  .view-tab:hover { color: var(--ink-2); }
+  .view-tab.on {
+    color: var(--ink-1);
+    background: var(--surface);
+    border-color: var(--border);
+    font-weight: 600;
+  }
+  .view-tab .count {
+    font-family:'JetBrains Mono',monospace; font-size:10px;
+    padding:1px 6px; border-radius:10px;
+    background: var(--surface-2); color: var(--ink-3);
+    border:1px solid var(--border);
+    font-weight: 600;
+  }
+  .view-tab.add { color: var(--ink-4); padding: 8px 10px 9px; }
+
+  /* Subtoolbar */
+  .subtool {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 18px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .filter-pill {
+    display:inline-flex; align-items:center; gap:6px;
+    height:26px; padding:0 9px;
+    background:var(--surface); border:1px solid var(--border-strong);
+    border-radius:6px; font-size:11px; font-weight:500; color:var(--ink-2);
+    cursor:pointer;
+  }
+  .filter-pill .lbl-key { font-size:10px; color:var(--ink-4); font-weight:500; text-transform:uppercase; letter-spacing:0.06em; }
+  .filter-pill.on { background:var(--ink-1); color:#fff; border-color:var(--ink-1); }
+  .filter-pill.on .lbl-key { color:rgba(255,255,255,.55); }
+  .filter-pill .ico { width:12px; height:12px; }
+  .filter-pill.dashed { border-style: dashed; color: var(--ink-4); }
+
+  .seg { display:inline-flex; background:var(--surface); border:1px solid var(--border-strong); border-radius:6px; padding:2px; height:28px; }
+  .seg button { height:22px; padding:0 9px; background:transparent; border:0; border-radius:4px; font-size:11px; font-weight:500; color:var(--ink-3); cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; }
+  .seg button.on { background:var(--ink-1); color:#fff; }
+
+  .meta-count { margin-left:auto; font-size:11px; color:var(--ink-4); font-family:'JetBrains Mono',monospace; }
+
+  /* Main content scroll area */
+  .content-wrap {
+    overflow: auto;
+    min-height: 0;
+    background: var(--bg);
+    position: relative;
+  }
+
+  /* Quick add row */
+  .quick-add {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 10px;
+    position: sticky; top: 0; z-index: 3;
+  }
+  .quick-add .plus {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: var(--idea-soft); color: #a16207;
+    display: grid; place-items: center;
+    border: 1px dashed #fde68a;
+  }
+  .quick-add input {
+    flex: 1; border: 0; outline: 0;
+    font-family: inherit; font-size: 13px;
+    color: var(--ink-1); background: transparent;
+    padding: 4px 0;
+  }
+  .quick-add input::placeholder { color: var(--ink-4); font-style: italic; }
+  .quick-add .hint {
+    font-size: 11px; color: var(--ink-4);
+  }
+  .quick-add .hint .kbd {
+    font-family:'JetBrains Mono',monospace; font-size:10px;
+    padding: 1px 5px; background:var(--surface-2);
+    border:1px solid var(--border); border-radius:3px; color:var(--ink-3);
+  }
+
+  /* Table */
+  .table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 12.5px;
+  }
+  .table thead th {
+    position: sticky; top: 39px;
+    background: var(--bg);
+    z-index: 2;
+    text-align: left;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-4);
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .table thead th:hover { color: var(--ink-2); }
+  .table thead th.col-check { width: 36px; padding-right: 0; }
+  .table thead th.col-actions { width: 76px; text-align: right; }
+  .table thead th .sort-ico { display: inline-block; width: 10px; height: 10px; margin-left: 4px; vertical-align: middle; opacity: 0.3; }
+  .table thead th.sort-asc .sort-ico, .table thead th.sort-desc .sort-ico { opacity: 1; color: var(--ink-1); }
+  .table thead th.sort-asc .sort-ico { transform: rotate(180deg); }
+
+  /* Category group header */
+  .group-row td {
+    background: var(--bg);
+    padding: 18px 10px 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .group-head {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 12px; font-weight: 600;
+    color: var(--ink-2);
+  }
+  .group-head .cat-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .cat-ai    { background: var(--t-red);    color: #b91c1c; border: 1px solid #fecaca; }
+  .cat-azure { background: var(--t-blue);   color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .cat-copilot { background: var(--t-violet); color: #6d28d9; border: 1px solid #ddd6fe; }
+  .cat-canvas { background: var(--t-cyan);  color: #0e7490; border: 1px solid #a5f3fc; }
+  .cat-model  { background: var(--t-indigo); color: #4338ca; border: 1px solid #c7d2fe; }
+  .cat-power  { background: var(--t-amber); color: #b45309; border: 1px solid #fde68a; }
+  .cat-pages  { background: var(--t-pink);  color: #be185d; border: 1px solid #fbcfe8; }
+  .cat-app    { background: var(--t-green); color: #047857; border: 1px solid #a7f3d0; }
+  .cat-other  { background: var(--t-slate); color: #475569; border: 1px solid #cbd5e1; }
+
+  .group-head .count {
+    font-family:'JetBrains Mono',monospace; font-size:11px;
+    padding:1px 7px; border-radius:10px;
+    background: var(--surface); color: var(--ink-2);
+    border:1px solid var(--border-strong); font-weight: 600;
+  }
+  .group-head .chev {
+    width: 14px; height: 14px; color: var(--ink-4); cursor: pointer;
+  }
+
+  /* Rows (compact by default) */
+  .table tbody tr.row-item {
+    background: var(--surface);
+    transition: background 0.12s;
+  }
+  .table tbody tr.row-item:hover { background: var(--surface-2); }
+  .table tbody tr.row-item.selected { background: var(--idea-soft); }
+
+  .table tbody td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    position: relative;
+  }
+  .table tbody tr.row-item td.col-check { padding-left: 14px; }
+
+  /* Checkbox */
+  .chk {
+    width: 15px; height: 15px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 3px;
+    background: var(--surface);
+    cursor: pointer;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .chk.on { background: var(--ink-1); border-color: var(--ink-1); }
+  .chk.on::after {
+    content: ''; width: 8px; height: 8px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") no-repeat center/contain;
+  }
+
+  /* Name cell */
+  .c-name {
+    display: flex; align-items: center; gap: 10px;
+    min-width: 320px; max-width: 460px;
+  }
+  .c-name .bulb {
+    width: 18px; height: 18px; border-radius: 4px;
+    background: var(--idea-soft); color: #a16207;
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .c-name .title-col { min-width: 0; flex: 1; }
+  .c-name .name-text {
+    font-size: 13px; font-weight: 600; color: var(--ink-1);
+    letter-spacing: -0.005em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .c-name .desc {
+    margin-top: 1px;
+    font-size: 11px; color: var(--ink-3);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Tag chips (small) */
+  .tag {
+    display: inline-flex; align-items: center;
+    padding: 1px 6px; border-radius: 3px;
+    background: var(--surface-2); color: var(--ink-3);
+    border: 1px solid var(--border);
+    font-size: 10px; font-weight: 500;
+  }
+  .tag + .tag { margin-left: 3px; }
+  .c-tags { display: flex; gap: 3px; flex-wrap: nowrap; overflow: hidden; }
+
+  /* Account chip */
+  .c-account { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .acc-avatar {
+    width: 18px; height: 18px; border-radius: 4px;
+    display: grid; place-items: center;
+    color: #fff; font-size: 8.5px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+  }
+  .acc-avatar.blank {
+    background: var(--surface-2); color: var(--ink-4);
+    border: 1px dashed var(--border-strong);
+  }
+  .acc-pa { background: var(--c-blue); }
+  .acc-ph { background: var(--c-green); }
+  .acc-ny { background: var(--c-amber); }
+  .acc-la { background: var(--c-violet); }
+  .acc-mc { background: #f97316; }
+  .acc-tx { background: var(--c-red); }
+
+  /* Status pill */
+  .pill-sm { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; font-family:'JetBrains Mono',monospace; letter-spacing:0.02em; text-transform:uppercase; white-space: nowrap; }
+  .pill-sm.st-new { background: var(--t-blue); color: #1d4ed8; }
+  .pill-sm.st-val { background: var(--t-violet); color: #6d28d9; }
+  .pill-sm.st-plan { background: var(--t-green); color: #047857; }
+  .pill-sm.st-arch { background: var(--t-slate); color: #64748b; }
+  .pill-sm.pp-top { background:var(--t-red); color:#b91c1c; }
+  .pill-sm.pp-high { background:var(--t-amber); color:#b45309; }
+  .pill-sm.pp-med { background:var(--t-slate); color:#475569; }
+  .pill-sm.pp-low { background:var(--t-blue); color:#1d4ed8; }
+  .pill-sm.pp-none { background:transparent; color:var(--ink-4); }
+
+  /* Linked action items */
+  .c-linked {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family:'JetBrains Mono',monospace; font-size: 11px;
+    padding: 2px 7px; border-radius: 4px;
+    background: var(--surface-2); color: var(--ink-2);
+    border: 1px solid var(--border);
+  }
+  .c-linked.none { background: transparent; color: var(--ink-4); border-color: transparent; padding-left: 2px; }
+  .c-linked svg { width: 10px; height: 10px; }
+
+  /* Age col */
+  .c-age { font-family:'JetBrains Mono',monospace; font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+
+  /* Actions */
+  .c-actions { text-align: right; padding-right: 14px !important; }
+  .action-btns { display: inline-flex; gap: 2px; opacity: 0; transition: opacity 0.12s; }
+  .row-item:hover .action-btns { opacity: 1; }
+  .action-btns button {
+    height: 22px; padding: 0 7px;
+    background: transparent; border: 0; border-radius: 4px;
+    color: var(--ink-3); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10.5px; font-weight: 600; font-family: inherit;
+    letter-spacing: 0.02em; text-transform: uppercase;
+  }
+  .action-btns button:hover { background: var(--surface-3); color: var(--ink-1); }
+  .action-btns button.promote {
+    background: var(--idea-soft); color: #a16207;
+  }
+  .action-btns button.promote:hover { background: #fde047; color: #713f12; }
+  .action-btns button.danger:hover { color: var(--c-red); }
+  .action-btns svg { width: 11px; height: 11px; }
+
+  /* Bulk bar */
+  .bulk-bar {
+    position: fixed; left: 50%;
+    bottom: 20px; transform: translateX(-50%);
+    background: var(--ink-1); color: #fff;
+    border-radius: 10px;
+    padding: 8px 10px 8px 14px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 10px 28px rgba(15,15,20,.2);
+    z-index: 20; font-size: 12px;
+  }
+  .bulk-bar .count { font-family:'JetBrains Mono',monospace; font-weight:600; padding:2px 8px; border-radius:4px; background: rgba(255,255,255,.12); }
+  .bulk-bar .bb-btn { display:inline-flex; align-items:center; gap:5px; padding: 4px 10px; border-radius:5px; background: transparent; border: 0; color: #fff; font-weight:500; cursor:pointer; font-family:inherit; font-size: 12px; }
+  .bulk-bar .bb-btn:hover { background: rgba(255,255,255,.12); }
+  .bulk-bar .bb-btn.promote { background: #eab308; color: #713f12; }
+  .bulk-bar .bb-btn.promote:hover { background: #facc15; }
+  .bulk-bar .bb-btn.danger { color: #fca5a5; }
+  .bulk-bar .bb-btn .ico { width:12px; height:12px; }
+  .bulk-bar .sep { width: 1px; height: 18px; background: rgba(255,255,255,.18); }
+
+  /* Floating capture composer */
+  .composer {
+    position: fixed; right: 22px; bottom: 22px;
+    width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(15,15,20,.12), 0 2px 8px rgba(15,15,20,.06);
+    z-index: 15;
+    overflow: hidden;
+  }
+  .composer-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, #fef9c3, #fde68a);
+    border-bottom: 1px solid #fde68a;
+    color: #713f12;
+    font-size: 12px; font-weight: 600;
+  }
+  .composer-head svg { width: 14px; height: 14px; }
+  .composer-head .spacer { flex: 1; }
+  .composer-head .mini-kbd {
+    font-family:'JetBrains Mono',monospace; font-size: 10px;
+    padding: 1px 5px; border-radius: 3px;
+    background: rgba(255,255,255,.6); color: #713f12;
+    border: 1px solid rgba(0,0,0,.08);
+  }
+  .composer-body { padding: 12px; }
+  .composer-body textarea {
+    width: 100%; border: 0; outline: 0; resize: none;
+    font-family: inherit; font-size: 13px;
+    color: var(--ink-1); background: transparent;
+    min-height: 54px;
+    line-height: 1.5;
+  }
+  .composer-body textarea::placeholder { color: var(--ink-4); }
+  .composer-foot {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .composer-foot .mini-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    height: 22px; padding: 0 8px; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--border-strong);
+    font-size: 10.5px; color: var(--ink-3); cursor: pointer;
+  }
+  .composer-foot .mini-chip.on { background: var(--idea-soft); color: #a16207; border-color: #fde68a; }
+  .composer-foot .mini-chip svg { width: 10px; height: 10px; }
+  .composer-foot .spacer { flex: 1; }
+  .composer-foot .post-btn {
+    height: 24px; padding: 0 12px; border-radius: 5px;
+    background: var(--ink-1); color: #fff; border: 0;
+    font-family: inherit; font-size: 11px; font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Gallery view (hidden by default) */
+  .gallery { display: none; padding: 14px 18px; }
+  .gallery.on { display: block; }
+  .gallery-group + .gallery-group { margin-top: 22px; }
+  .gallery-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .gallery-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .idea-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 12px 10px;
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 130px;
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    transition: transform .1s, box-shadow .1s;
+  }
+  .idea-card:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(15,15,20,.06); }
+  .idea-card .ic-head { display: flex; align-items: center; gap: 8px; }
+  .idea-card .ic-head .bulb {
+    width: 16px; height: 16px; border-radius: 3px;
+    background: var(--idea-soft); color: #a16207;
+    display: grid; place-items: center;
+  }
+  .idea-card .ic-name {
+    font-size: 13px; font-weight: 600;
+    color: var(--ink-1);
+    letter-spacing: -0.005em;
+  }
+  .idea-card .ic-desc {
+    font-size: 11.5px; color: var(--ink-3);
+    line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .idea-card .ic-foot {
+    margin-top: auto;
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap;
+  }
+  .idea-card .ic-foot .c-age { margin-left: auto; }
+
+  /* Kanban view */
+  .kanban { display: none; padding: 14px 18px 20px; height: 100%; overflow: auto; }
+  .kanban.on { display: flex; gap: 10px; }
+  .k-col {
+    flex: 1; min-width: 240px;
+    background: var(--surface-2);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 10px;
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  .k-head {
+    display: flex; align-items: center; gap: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .k-head .name { font-size: 12px; font-weight: 600; }
+  .k-head .count {
+    font-family:'JetBrains Mono',monospace; font-size: 10px;
+    padding: 1px 7px; border-radius: 10px;
+    background: var(--surface); color: var(--ink-2);
+    border: 1px solid var(--border-strong);
+  }
+  .k-col .items { display: flex; flex-direction: column; gap: 6px; }
+  .k-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px;
+    display: flex; flex-direction: column; gap: 5px;
+    cursor: grab; box-shadow: var(--shadow-card);
+  }
+  .k-item .ki-name { font-size: 12px; font-weight: 600; }
+  .k-item .ki-foot { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--ink-4); }
+</style>
+</head>
+<body>
+
+<div class="app" data-screen-label="Ideas">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="apps-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div>Power Apps</div>
+    <div class="sep"></div>
+    <div class="app-name">My Work Code App (GCC)</div>
+    <div class="spacer"></div>
+    <div class="pill">
+      <svg class="ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      Share
+    </div>
+    <div class="icon-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+    <div class="icon-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    <div class="icon-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+    <div class="avatar"></div>
+  </div>
+
+  <div class="body">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="workspace">
+        <div class="dot">M</div>
+        <div>My Work</div>
+      </div>
+      <div class="section-label">Insights</div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg>My Board</div>
+
+      <div class="section-label">Activity</div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Action Items<span class="count mono">30</span></div>
+
+      <div class="section-label">Capture</div>
+      <div class="nav-item active">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg>
+        Ideas <span class="count mono">47</span>
+      </div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>Meetings<span class="count mono">8</span></div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Projects<span class="count mono">5</span></div>
+
+      <div class="section-label">Core</div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>Accounts<span class="count mono">4</span></div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Contacts<span class="count mono">47</span></div>
+
+      <div class="footer">
+        <div class="footer-row">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Search</span><span class="kbd" style="margin-left:auto">Ctrl+K</span>
+        </div>
+        <div class="footer-row">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <span>Dark mode</span>
+        </div>
+        <div style="font-size: 10px; color: var(--ink-4); margin-top: 4px;">Power Platform · v2.4</div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="main">
+
+      <!-- Quick create -->
+      <div class="quick-create">
+        <span class="qc-label">Quick Create</span>
+        <button class="chip work">work</button>
+        <button class="chip personal">personal</button>
+        <button class="chip learning">learning</button>
+        <button class="chip idea">idea</button>
+        <button class="chip meeting">meeting</button>
+        <button class="chip project">project</button>
+        <button class="chip account">account</button>
+        <button class="chip contact">contact</button>
+      </div>
+
+      <!-- Hero: title · stats · category distribution -->
+      <div class="hero">
+        <div class="hero-row">
+          <div class="hero-tile">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg>
+          </div>
+          <div>
+            <div class="sub">Capture first, refine later</div>
+            <h1>Ideas</h1>
+          </div>
+          <div class="spacer"></div>
+          <div class="stats">
+            <div><b>47</b><span class="stat-label">Total</span></div>
+            <div><b>12</b><span class="stat-label">New / 7d</span></div>
+            <div><b>8</b><span class="stat-label">Promoted</span></div>
+            <div><b>19</b><span class="stat-label">Tied to accounts</span></div>
+          </div>
+          <button class="btn idea-btn">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Idea
+          </button>
+        </div>
+
+        <div class="cat-strip">
+          <button class="cat-pill on"><span class="cat-dot" style="background:transparent;display:none"></span>All categories <span class="cat-count">47</span></button>
+          <button class="cat-pill"><span class="cat-dot" style="background:#ef4444"></span>AI General <span class="cat-count">9</span></button>
+          <button class="cat-pill"><span class="cat-dot" style="background:#3b82f6"></span>Azure <span class="cat-count">7</span></button>
+          <button class="cat-pill"><span class="cat-dot" style="background:#8b5cf6"></span>Copilot Studio <span class="cat-count">6</span></button>
+          <button class="cat-pill"><span class="cat-dot" style="background:#06b6d4"></span>Canvas Apps <span class="cat-count">5</span></button>
+          <button class="cat-pill"><span class="cat-dot" style="background:#6366f1"></span>Model-Driven <span class="cat-count">4</span></button>
+          <button class="cat-pill"><span class="cat-dot" style="background:#f59e0b"></span>Power Automate <span class="cat-count">4</span></button>
+          <button class="cat-pill"><span class="cat-dot" style="background:#ec4899"></span>Power Pages <span class="cat-count">3</span></button>
+          <button class="cat-pill"><span class="cat-dot" style="background:#22c55e"></span>App General <span class="cat-count">3</span></button>
+          <button class="cat-pill"><span class="cat-dot" style="background:#64748b"></span>Other <span class="cat-count">6</span></button>
+        </div>
+      </div>
+
+      <!-- Capture row: big search -->
+      <div class="capture-row">
+        <div class="capture-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input placeholder="Search ideas by name, description, tag, or account…" />
+          <span class="kbd">/</span>
+        </div>
+        <button class="btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+      </div>
+
+      <!-- Saved views -->
+      <div class="views">
+        <div class="view-tab on">All <span class="count">47</span></div>
+        <div class="view-tab">Mine <span class="count">31</span></div>
+        <div class="view-tab">New this week <span class="count">12</span></div>
+        <div class="view-tab">High potential <span class="count">14</span></div>
+        <div class="view-tab">Promoted <span class="count">8</span></div>
+        <div class="view-tab">Archived <span class="count">6</span></div>
+        <div class="view-tab add"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Save view</div>
+      </div>
+
+      <!-- Subtoolbar -->
+      <div class="subtool">
+        <button class="filter-pill"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>Group <span class="lbl-key">by</span> Category</button>
+        <button class="filter-pill"><span class="lbl-key">Status</span> Any</button>
+        <button class="filter-pill"><span class="lbl-key">Account</span> Any</button>
+        <button class="filter-pill"><span class="lbl-key">Priority</span> Any</button>
+        <button class="filter-pill dashed"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add filter</button>
+
+        <div style="flex:1"></div>
+
+        <span class="meta-count">47 ideas</span>
+
+        <div class="seg" id="view-seg" title="View">
+          <button class="on" data-view="table" title="Table"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+          <button data-view="gallery" title="Gallery"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+          <button data-view="kanban" title="Kanban"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18"/><rect x="10" y="3" width="5" height="12"/><rect x="17" y="3" width="5" height="8"/></svg></button>
+        </div>
+        <button class="btn icon-only" title="Column settings"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg></button>
+      </div>
+
+      <!-- Content: table (default) -->
+      <div class="content-wrap" id="view-table">
+
+        <!-- Quick add row -->
+        <div class="quick-add">
+          <div class="plus">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <input placeholder="Capture a new idea — just start typing…" />
+          <span class="hint">Press <span class="kbd">↵</span> to save · <span class="kbd">Tab</span> to add category</span>
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="col-check"><div class="chk" title="Select all"></div></th>
+              <th class="sort-asc">Idea <svg class="sort-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></th>
+              <th>Account</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Tags</th>
+              <th>Linked</th>
+              <th>Captured</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- ===== Category: AI General ===== -->
+            <tr class="group-row"><td colspan="9">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <span class="cat-badge cat-ai">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/></svg>
+                  AI General
+                </span>
+                <span class="count mono">9 ideas</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">AI Builder for handwritten benefits forms</div><div class="desc">Extract structured data from scanned SNAP/TANF intake packets</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar acc-pa">PA</div>Commonwealth of PA</div></td>
+              <td><span class="pill-sm st-val">Validating</span></td>
+              <td><span class="pill-sm pp-high">High</span></td>
+              <td><div class="c-tags"><span class="tag">OCR</span><span class="tag">benefits</span></div></td>
+              <td><span class="c-linked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>2</span></td>
+              <td><span class="c-age">3d</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote" title="Promote to Action Item">↗ Promote</button>
+                <button class="danger" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <tr class="row-item selected">
+              <td class="col-check"><div class="chk on"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">MCP server for Dataverse</div><div class="desc">Expose Dataverse tables to Claude / Copilot via MCP protocol</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar blank">—</div><span style="color:var(--ink-4)">No account</span></div></td>
+              <td><span class="pill-sm st-plan">Planned</span></td>
+              <td><span class="pill-sm pp-top">Top</span></td>
+              <td><div class="c-tags"><span class="tag">MCP</span><span class="tag">protocol</span><span class="tag">AI</span></div></td>
+              <td><span class="c-linked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>1</span></td>
+              <td><span class="c-age">1w</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">AI-assisted 311 triage classifier</div><div class="desc">Auto-categorize and prioritize citizen requests on intake</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar acc-ph">PH</div>City of Philadelphia</div></td>
+              <td><span class="pill-sm st-new">New</span></td>
+              <td><span class="pill-sm pp-med">Med</span></td>
+              <td><div class="c-tags"><span class="tag">NLP</span><span class="tag">311</span></div></td>
+              <td><span class="c-linked none">—</span></td>
+              <td><span class="c-age">2d</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Category: Azure ===== -->
+            <tr class="group-row"><td colspan="9">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <span class="cat-badge cat-azure">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                  Azure
+                </span>
+                <span class="count mono">7 ideas</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">Azure AI Document Intelligence for records redaction</div><div class="desc">PII redaction pipeline for public records requests</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar acc-mc">MC</div>Maricopa County</div></td>
+              <td><span class="pill-sm st-val">Validating</span></td>
+              <td><span class="pill-sm pp-high">High</span></td>
+              <td><div class="c-tags"><span class="tag">PII</span><span class="tag">redaction</span></div></td>
+              <td><span class="c-linked none">—</span></td>
+              <td><span class="c-age">5d</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">Azure OpenAI meeting summarizer for SLG</div><div class="desc">Auto-summarize SLG stakeholder meetings with action items</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar blank">—</div><span style="color:var(--ink-4)">No account</span></div></td>
+              <td><span class="pill-sm st-new">New</span></td>
+              <td><span class="pill-sm pp-med">Med</span></td>
+              <td><div class="c-tags"><span class="tag">meetings</span><span class="tag">GPT-4o</span></div></td>
+              <td><span class="c-linked none">—</span></td>
+              <td><span class="c-age">4d</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Category: Copilot Studio ===== -->
+            <tr class="group-row"><td colspan="9">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <span class="cat-badge cat-copilot">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  Copilot Studio
+                </span>
+                <span class="count mono">6 ideas</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">Copilot Studio agent for IT helpdesk</div><div class="desc">Triage L1 tickets against KB, escalate when confidence low</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar acc-ny">NY</div>New York State ITS</div></td>
+              <td><span class="pill-sm st-val">Validating</span></td>
+              <td><span class="pill-sm pp-high">High</span></td>
+              <td><div class="c-tags"><span class="tag">helpdesk</span><span class="tag">IT</span></div></td>
+              <td><span class="c-linked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>1</span></td>
+              <td><span class="c-age">1w</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <tr class="row-item selected">
+              <td class="col-check"><div class="chk on"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">Copilot Studio multi-language support for 311</div><div class="desc">Spanish, Mandarin, Haitian Creole for Philly 311 agent</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar acc-ph">PH</div>City of Philadelphia</div></td>
+              <td><span class="pill-sm st-plan">Planned</span></td>
+              <td><span class="pill-sm pp-high">High</span></td>
+              <td><div class="c-tags"><span class="tag">i18n</span><span class="tag">311</span></div></td>
+              <td><span class="c-linked"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>2</span></td>
+              <td><span class="c-age">6d</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Category: Canvas Apps ===== -->
+            <tr class="group-row"><td colspan="9">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <span class="cat-badge cat-canvas">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+                  Canvas Apps
+                </span>
+                <span class="count mono">5 ideas</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">Canvas app for emergency field workers</div><div class="desc">Offline-first intake tool with sync-on-reconnect</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar acc-la">LA</div>Los Angeles County</div></td>
+              <td><span class="pill-sm st-val">Validating</span></td>
+              <td><span class="pill-sm pp-med">Med</span></td>
+              <td><div class="c-tags"><span class="tag">offline</span><span class="tag">field</span></div></td>
+              <td><span class="c-linked none">—</span></td>
+              <td><span class="c-age">2w</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Category: Model-Driven ===== -->
+            <tr class="group-row"><td colspan="9">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <span class="cat-badge cat-model">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></svg>
+                  Model-Driven
+                </span>
+                <span class="count mono">4 ideas</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">Model-driven app for grant management</div><div class="desc">Application intake through disbursement lifecycle</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar blank">—</div><span style="color:var(--ink-4)">No account</span></div></td>
+              <td><span class="pill-sm st-new">New</span></td>
+              <td><span class="pill-sm pp-low">Low</span></td>
+              <td><div class="c-tags"><span class="tag">grants</span><span class="tag">lifecycle</span></div></td>
+              <td><span class="c-linked none">—</span></td>
+              <td><span class="c-age">3w</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Category: Power Automate ===== -->
+            <tr class="group-row"><td colspan="9">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <span class="cat-badge cat-power">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  Power Automate
+                </span>
+                <span class="count mono">4 ideas</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">Power Automate approval chains for SNAP</div><div class="desc">Multi-tier approvals with delegation and SLA tracking</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar acc-tx">TX</div>State of Texas HHS</div></td>
+              <td><span class="pill-sm st-new">New</span></td>
+              <td><span class="pill-sm pp-med">Med</span></td>
+              <td><div class="c-tags"><span class="tag">approvals</span><span class="tag">SLA</span></div></td>
+              <td><span class="c-linked none">—</span></td>
+              <td><span class="c-age">4d</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Category: Power Pages ===== -->
+            <tr class="group-row"><td colspan="9">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <span class="cat-badge cat-pages">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  Power Pages
+                </span>
+                <span class="count mono">3 ideas</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">Power Pages citizen feedback portal template</div><div class="desc">Reusable template with moderation, voting, and dashboards</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar blank">—</div><span style="color:var(--ink-4)">No account</span></div></td>
+              <td><span class="pill-sm st-new">New</span></td>
+              <td><span class="pill-sm pp-low">Low</span></td>
+              <td><div class="c-tags"><span class="tag">template</span><span class="tag">portal</span></div></td>
+              <td><span class="c-linked none">—</span></td>
+              <td><span class="c-age">3w</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Category: Other ===== -->
+            <tr class="group-row"><td colspan="9">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <span class="cat-badge cat-other">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                  Other
+                </span>
+                <span class="count mono">6 ideas</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td><div class="c-name"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="title-col"><div class="name-text">GCC-to-Commercial data sync pattern</div><div class="desc">Reference pattern for regulated data movement via ADF</div></div></div></td>
+              <td><div class="c-account"><div class="acc-avatar blank">—</div><span style="color:var(--ink-4)">No account</span></div></td>
+              <td><span class="pill-sm st-val">Validating</span></td>
+              <td><span class="pill-sm pp-high">High</span></td>
+              <td><div class="c-tags"><span class="tag">GCC</span><span class="tag">data</span><span class="tag">pattern</span></div></td>
+              <td><span class="c-linked none">—</span></td>
+              <td><span class="c-age">1w</span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="promote">↗ Promote</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- GALLERY view -->
+      <div class="gallery" id="view-gallery">
+        <div class="gallery-group">
+          <div class="gallery-head">
+            <span class="cat-badge cat-ai">AI General</span>
+            <span class="count mono" style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-3);">9 ideas</span>
+          </div>
+          <div class="gallery-grid">
+            <div class="idea-card"><div class="ic-head"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="ic-name">AI Builder for handwritten benefits forms</div></div><div class="ic-desc">Extract structured data from scanned SNAP/TANF intake packets</div><div class="ic-foot"><span class="pill-sm st-val">Validating</span><span class="pill-sm pp-high">High</span><span class="c-age">3d</span></div></div>
+            <div class="idea-card"><div class="ic-head"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="ic-name">MCP server for Dataverse</div></div><div class="ic-desc">Expose Dataverse tables to Claude / Copilot via MCP protocol</div><div class="ic-foot"><span class="pill-sm st-plan">Planned</span><span class="pill-sm pp-top">Top</span><span class="c-age">1w</span></div></div>
+            <div class="idea-card"><div class="ic-head"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="ic-name">AI-assisted 311 triage classifier</div></div><div class="ic-desc">Auto-categorize and prioritize citizen requests on intake</div><div class="ic-foot"><span class="pill-sm st-new">New</span><span class="pill-sm pp-med">Med</span><span class="c-age">2d</span></div></div>
+          </div>
+        </div>
+        <div class="gallery-group">
+          <div class="gallery-head">
+            <span class="cat-badge cat-azure">Azure</span>
+            <span class="count mono" style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-3);">7 ideas</span>
+          </div>
+          <div class="gallery-grid">
+            <div class="idea-card"><div class="ic-head"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="ic-name">Azure AI Document Intelligence for records redaction</div></div><div class="ic-desc">PII redaction pipeline for public records requests</div><div class="ic-foot"><span class="pill-sm st-val">Validating</span><span class="pill-sm pp-high">High</span><span class="c-age">5d</span></div></div>
+            <div class="idea-card"><div class="ic-head"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="ic-name">Azure OpenAI meeting summarizer for SLG</div></div><div class="ic-desc">Auto-summarize SLG stakeholder meetings with action items</div><div class="ic-foot"><span class="pill-sm st-new">New</span><span class="pill-sm pp-med">Med</span><span class="c-age">4d</span></div></div>
+          </div>
+        </div>
+        <div class="gallery-group">
+          <div class="gallery-head">
+            <span class="cat-badge cat-copilot">Copilot Studio</span>
+            <span class="count mono" style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-3);">6 ideas</span>
+          </div>
+          <div class="gallery-grid">
+            <div class="idea-card"><div class="ic-head"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="ic-name">Copilot Studio agent for IT helpdesk</div></div><div class="ic-desc">Triage L1 tickets against KB, escalate when confidence low</div><div class="ic-foot"><span class="pill-sm st-val">Validating</span><span class="pill-sm pp-high">High</span><span class="c-age">1w</span></div></div>
+            <div class="idea-card"><div class="ic-head"><div class="bulb"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg></div><div class="ic-name">Copilot Studio multi-language support for 311</div></div><div class="ic-desc">Spanish, Mandarin, Haitian Creole for Philly 311 agent</div><div class="ic-foot"><span class="pill-sm st-plan">Planned</span><span class="pill-sm pp-high">High</span><span class="c-age">6d</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KANBAN view -->
+      <div class="kanban" id="view-kanban">
+        <div class="k-col">
+          <div class="k-head"><span class="name">New</span><span class="count">16</span></div>
+          <div class="items">
+            <div class="k-item"><div class="ki-name">AI-assisted 311 triage classifier</div><div class="ki-foot"><span class="cat-badge cat-ai" style="font-size:9px; padding: 1px 6px;">AI General</span><span style="margin-left:auto">2d</span></div></div>
+            <div class="k-item"><div class="ki-name">Azure OpenAI meeting summarizer</div><div class="ki-foot"><span class="cat-badge cat-azure" style="font-size:9px; padding: 1px 6px;">Azure</span><span style="margin-left:auto">4d</span></div></div>
+            <div class="k-item"><div class="ki-name">Power Automate approval chains for SNAP</div><div class="ki-foot"><span class="cat-badge cat-power" style="font-size:9px; padding: 1px 6px;">Power Automate</span><span style="margin-left:auto">4d</span></div></div>
+            <div class="k-item"><div class="ki-name">Model-driven app for grant management</div><div class="ki-foot"><span class="cat-badge cat-model" style="font-size:9px; padding: 1px 6px;">Model-Driven</span><span style="margin-left:auto">3w</span></div></div>
+          </div>
+        </div>
+        <div class="k-col">
+          <div class="k-head"><span class="name">Validating</span><span class="count">17</span></div>
+          <div class="items">
+            <div class="k-item"><div class="ki-name">AI Builder for handwritten benefits forms</div><div class="ki-foot"><span class="cat-badge cat-ai" style="font-size:9px; padding: 1px 6px;">AI General</span><span style="margin-left:auto">3d</span></div></div>
+            <div class="k-item"><div class="ki-name">Azure AI Document Intelligence for redaction</div><div class="ki-foot"><span class="cat-badge cat-azure" style="font-size:9px; padding: 1px 6px;">Azure</span><span style="margin-left:auto">5d</span></div></div>
+            <div class="k-item"><div class="ki-name">Copilot Studio agent for IT helpdesk</div><div class="ki-foot"><span class="cat-badge cat-copilot" style="font-size:9px; padding: 1px 6px;">Copilot Studio</span><span style="margin-left:auto">1w</span></div></div>
+            <div class="k-item"><div class="ki-name">Canvas app for emergency field workers</div><div class="ki-foot"><span class="cat-badge cat-canvas" style="font-size:9px; padding: 1px 6px;">Canvas</span><span style="margin-left:auto">2w</span></div></div>
+            <div class="k-item"><div class="ki-name">GCC-to-Commercial data sync pattern</div><div class="ki-foot"><span class="cat-badge cat-other" style="font-size:9px; padding: 1px 6px;">Other</span><span style="margin-left:auto">1w</span></div></div>
+          </div>
+        </div>
+        <div class="k-col">
+          <div class="k-head"><span class="name">Planned</span><span class="count">8</span></div>
+          <div class="items">
+            <div class="k-item"><div class="ki-name">MCP server for Dataverse</div><div class="ki-foot"><span class="cat-badge cat-ai" style="font-size:9px; padding: 1px 6px;">AI General</span><span style="margin-left:auto">1w</span></div></div>
+            <div class="k-item"><div class="ki-name">Copilot Studio multi-language support</div><div class="ki-foot"><span class="cat-badge cat-copilot" style="font-size:9px; padding: 1px 6px;">Copilot Studio</span><span style="margin-left:auto">6d</span></div></div>
+          </div>
+        </div>
+        <div class="k-col">
+          <div class="k-head"><span class="name">Archived</span><span class="count">6</span></div>
+          <div class="items">
+            <div class="k-item" style="opacity:.55"><div class="ki-name">Old Power BI custom visual for SLG</div><div class="ki-foot"><span class="cat-badge cat-other" style="font-size:9px; padding: 1px 6px;">Other</span><span style="margin-left:auto">2mo</span></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Bulk bar -->
+<div class="bulk-bar">
+  <span class="count mono">2 selected</span>
+  <div class="sep"></div>
+  <button class="bb-btn promote"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>Promote to Action Items</button>
+  <div class="sep"></div>
+  <button class="bb-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>Category</button>
+  <button class="bb-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>Account</button>
+  <button class="bb-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>Archive</button>
+  <div class="sep"></div>
+  <button class="bb-btn danger"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete</button>
+  <div class="sep"></div>
+  <button class="bb-btn" title="Clear selection" style="opacity: .7;">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+</div>
+
+<!-- Floating capture composer (persistent) -->
+<div class="composer">
+  <div class="composer-head">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg>
+    <span>Capture an idea</span>
+    <div class="spacer"></div>
+    <span class="mini-kbd">⌘⇧I</span>
+  </div>
+  <div class="composer-body">
+    <textarea placeholder="What's the spark? No formatting, no pressure — just get it down. Tag later."></textarea>
+  </div>
+  <div class="composer-foot">
+    <span class="mini-chip on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>AI General</span>
+    <span class="mini-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>Account</span>
+    <span class="mini-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>Tag</span>
+    <span class="spacer"></span>
+    <button class="post-btn">Capture ↵</button>
+  </div>
+</div>
+
+<script>
+  // Checkbox toggle
+  document.querySelectorAll('.row-item .chk').forEach(chk => {
+    chk.addEventListener('click', e => {
+      e.stopPropagation();
+      chk.classList.toggle('on');
+      chk.closest('tr').classList.toggle('selected');
+    });
+  });
+
+  // View switcher
+  const segBtns = document.querySelectorAll('#view-seg button');
+  const views = {
+    table: document.getElementById('view-table'),
+    gallery: document.getElementById('view-gallery'),
+    kanban: document.getElementById('view-kanban'),
+  };
+  segBtns.forEach(b => b.addEventListener('click', () => {
+    segBtns.forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    const v = b.dataset.view;
+    Object.entries(views).forEach(([k, el]) => {
+      if (k === v) { el.classList.add('on'); el.style.display = ''; }
+      else { el.classList.remove('on'); el.style.display = 'none'; }
+    });
+    if (v === 'gallery') views.gallery.style.display = 'block';
+    if (v === 'kanban')  views.kanban.style.display = 'flex';
+  }));
+  // init: hide non-table
+  views.gallery.style.display = 'none';
+  views.kanban.style.display = 'none';
+
+  // Category pill toggle
+  document.querySelectorAll('.cat-pill').forEach(p => p.addEventListener('click', () => {
+    document.querySelectorAll('.cat-pill').forEach(x => x.classList.remove('on'));
+    p.classList.add('on');
+  }));
+</script>
+
+</body>
+</html>

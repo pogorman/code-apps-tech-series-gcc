@@ -69,12 +69,14 @@ Hover over any card to reveal a floating toolbar in the top-right corner of the 
 
 ## View Toggle (Table / Card)
 
-All entity lists (including Projects) include a view toggle in the toolbar (between the search bar and the "New" button). Two modes are available:
+**Accounts, Contacts, and Projects** include a two-way view toggle in the toolbar (between the search bar and the "New" button):
 
 - **Table view** (list icon) — Traditional data table with column headers. Default view.
 - **Card view** (grid icon) — Responsive card grid (up to 3 columns). Each card shows key fields, edit/delete buttons, and is clickable to open the detail dialog.
 
 Your preference is saved per entity and persists across sessions.
+
+**Action Items** (Phase 27), **Ideas** (Phase 28), and **Meetings** (Phase 28) use their own multi-view segmented controls instead of this binary toggle — Action Items is table-only with Compact/Rich density modes, while Ideas and Meetings each offer three views (Ideas: Table / Gallery / Kanban; Meetings: Table / Gallery / Timeline). See the per-entity sections below.
 
 ## Priority Color-Coding (Card View)
 
@@ -178,29 +180,61 @@ Use the pencil (edit) and trash (delete) icons in the Actions column, or click *
 
 ### Viewing Meeting Summaries
 
-The Meetings page shows a page header with a FileText icon, a search bar, a view toggle, and a data table. Columns: Title, Account, Date, and Actions. Click any row to open the detail card. In card view, each card shows title, account, and date.
+The Meetings page uses the `--dash-*` design system with a teal accent (Phase 28). It has a data-forward hero, three view modes, and bulk actions.
 
-### Meeting Summary Detail Card
+**Header:** Teal icon tile + "Capture key meeting outcomes and notes" eyebrow + "Meeting Summaries" heading. Right side: Upload transcript button + gradient-teal "New Summary" primary button.
 
-Shows meeting info with active/inactive badge, account name, date, and summary text. Click **Edit** to modify.
+**Stats strip:** Four cards along the bottom of the hero: Total summaries (with account coverage count), This week, With summary (count of meetings that have summary text), and an 8-week cadence sparkline showing meeting counts per week with the current week highlighted at the tip of the line.
+
+**Toolbar:** Search bar with `/` keyboard hint searches titles and summary text. Export button is visual-only for now.
+
+**Saved-view tabs:**
+- **All** — every active meeting
+- **Mine** — your meetings (currently mirrors All until user plumbing is added)
+- **This week** — meetings dated within the last 7 days
+- **Needs summary** — meetings with empty summary text, good for triage
+- **Pinned** — meetings you've pinned via the bulk bar
+- **Archived** — archived meetings (`statecode=1`), filtered out of all other views
+
+Counts on each tab update live as you add, archive, or delete.
+
+**Subtoolbar:** Account filter pill (appears when you click an account group header in Table or Gallery view — teal when active, click the × to clear) + view-mode segment (Table / Gallery / Timeline) + item count.
+
+### View Modes
+
+**Table view** (default) — meetings grouped by account. Each group header shows a 2-letter colored avatar, account name (clickable to filter), and count. Rows show a 42×42 date tile (teal for upcoming, muted gray for past), pin indicator, title, first sentence of the summary, account avatar + name, and a two-line date column with the formatted date plus a relative label ("2d ago", "today" in teal). A sticky inline Quick-Add row at the top lets you capture a meeting with just a title and date.
+
+**Gallery view** — same account grouping in a responsive card grid. Each card has the date tile top-left, pin/title/relative-when, and a 3-line summary clamp.
+
+**Timeline view** — a Mon–Sun week grid centered on today. Today's column is outlined in teal with a soft halo. Each day column shows meetings stacked by time of day, with title and account avatar. Past days use a muted background; future days use the soft teal background. Meetings outside the current week appear in an "Other weeks" overflow grid below.
+
+### Bulk Actions
+
+Select rows via the checkboxes in table view (or select-all via the header checkbox). A floating dark bar appears at the bottom of the screen with:
+
+- **Spawn action items** (teal gradient) — requires exactly one selection; opens the existing AI extraction dialog that sends the meeting notes to Azure OpenAI and creates action items from the extracted items
+- **Pin / Unpin** — smart toggle: if any selection is unpinned, pins everything; otherwise unpins everything. Updates `tdvsp_pinned` in Dataverse
+- **Archive** — sets `statecode=1`; items move to the Archived tab
+- **Delete** — hard-deletes with a confirm prompt
 
 ### Creating a Meeting Summary
 
-Click **New Summary** to open the form. Fields:
+Click **New Summary** (or press `⌘⇧M` / `Ctrl+Shift+M` anywhere) to open the form. Fields:
 - **Title** (required) — the meeting title
 - **Account** — select an account from the dropdown
+- **Project** — optional project link
 - **Date** — meeting date
 - **Summary** — detailed meeting notes (large text area)
 
 ### Extract Action Items with AI
 
-On the Meetings list, click the sparkle (AI) icon on any row to extract action items from the meeting notes using Azure OpenAI. A dialog shows the extracted items with name, priority, due date, and notes. You can edit or remove items before confirming. On confirm, each item is created as an action item in Dataverse, linked to the meeting's account.
+Click the sparkle icon on a row (or use the bulk bar with one meeting selected) to open the AI extraction dialog. It sends the meeting notes to Azure OpenAI and returns a JSON array of action items with name, priority, due date, and notes. Review, edit, or remove items before confirming. On confirm, each item is created as an action item in Dataverse, linked to the meeting's account.
 
-> **Note:** This feature requires Azure OpenAI to be configured. If not configured, a toast notification will appear instead.
+> **Note:** This feature requires Azure OpenAI (set `VITE_AOAI_ENDPOINT`, `VITE_AOAI_API_KEY`, `VITE_AOAI_DEPLOYMENT`). If not configured, a toast notification appears instead.
 
 ### Editing / Deleting
 
-Use the pencil (edit) and trash (delete) icons in the Actions column, or click **Edit** from the detail card.
+Hover any row or card to reveal edit / delete icons. Click the row itself to open the detail dialog, which also has an Edit button.
 
 ## Projects
 
@@ -260,21 +294,72 @@ The agent authenticates automatically in the popup — no sign-in needed.
 
 ### Viewing Ideas
 
-The Ideas page shows a page header with a Lightbulb icon, a search bar, a view toggle, and a data table. Columns: Name, Account, Category (as a color-coded badge), and Actions. Click any row to open the detail card. In card view, each card shows name, account, and category badge.
+The Ideas page uses the `--dash-*` design system with a warm yellow accent (Phase 28). It's designed for low-friction capture first and structure second — a "sketchbook" rather than a ticketing system.
 
-### Idea Detail Card
+**Header:** Yellow-gradient Lightbulb tile + "Capture · organize · promote" eyebrow + "Ideas" heading. Stats on the right: total captured, this week, high potential. Below the hero is the **CategoryStrip** — pills for each category (Copilot Studio, Canvas Apps, Model-Driven Apps, Power Automate, Power Pages, Azure, AI General, App General, Other) with a colored dot and live count. Click any pill to filter; click again (or click "All categories") to clear. Categories with zero ideas are hidden.
 
-Shows idea info with active/inactive badge and category badge. Displays account, contact, and description. Click **Edit** to modify.
+**Toolbar:** Search bar (searches name and description) + Export (visual-only) + gradient-yellow "New Idea" primary button.
 
-### Creating an Idea
+**Saved-view tabs:**
+- **All** — every active idea
+- **Mine** — your ideas (currently mirrors All)
+- **New this week** — ideas captured in the last 7 days
+- **High potential** — ideas with High or Top Priority
+- **Archived** — archived ideas (`statecode=1`)
 
-Click **New Idea** to open the form. Fields:
+Counts on each tab update live.
+
+**Subtoolbar:** Active filter pills (category, priority, account — each with a clear-×) + view-mode segment (Table / Gallery / Kanban) + result count.
+
+### View Modes
+
+**Table view** (default) — category-grouped collapsible sections. Each group has a colored category badge, count, and a list of rows showing a bulb tile, name, description preview, account avatar, priority pill, and captured-age (relative). Hover a row to reveal Promote / Edit / Delete actions. A sticky inline **Quick-Add** row at the top lets you capture a one-liner with just a name — pressing ↵ saves it in the currently-filtered category.
+
+**Gallery view** — category-grouped responsive card grid (300px+). Each card has a bulb + 2-line name + 2-line description clamp + priority pill + account + relative age. Hover lifts the card slightly.
+
+**Kanban view** — columns by priority: Top Priority / High / Low / Eh / Unset. This substitutes for the brief's stage-based columns (New/Validating/Planned/Archived) because the Dataverse schema has no stage field yet. Click a card to open the detail dialog.
+
+### Capture Composer (signature element)
+
+A persistent floating composer sits in the bottom-right corner of the Ideas page. It's the defining element of the page:
+
+- **`⌘⇧I`** (or `Ctrl+Shift+I`) focuses the textarea from anywhere on the page
+- **`⌘↵`** (or `Ctrl+Enter`) captures the idea
+- The category chip (colored dot) opens a popover to pick category; default is AI General but remembers your last choice
+- The account chip lets you pre-bind the idea to an account; dashed border when no account is set
+- Drafts autosave to `localStorage` every 500ms — if you navigate away and come back, your half-typed idea is still there
+- Click the minus icon in the header to collapse to a FAB (pill button) in the bottom-right; click the FAB to re-expand. Your collapsed state persists
+
+### Promote to Action Items
+
+In Table view, hover a row and click the sparkle icon — or select multiple rows and click **Promote to Action Items** in the bulk bar. A preview dialog opens showing which ideas will become which action items. On confirm:
+
+- Each idea creates a new Work action item with status **Recognized**
+- The idea's priority is copied (defaulting to Med if unset)
+- The account is carried across via `tdvsp_Customer@odata.bind`
+- The description is copied verbatim
+- If "Archive idea after promoting" is checked (default on), the originating idea moves to the Archived tab
+
+### Bulk Actions
+
+Select rows via checkboxes. The floating bar at the bottom shows:
+
+- **Promote to Action Items** (yellow gradient) — opens the promote preview dialog
+- **Archive** — sets `statecode=1`
+- **Delete** — hard delete with confirm
+- **×** — clears selection
+
+### Creating an Idea (full form)
+
+Click **New Idea** for the full form, which adds contact + project + priority lookups beyond the Composer's quick-capture fields. Fields:
 - **Name** (required) — the idea title
-- **Category** — Copilot Studio, Canvas Apps, Model-Driven Apps, Power Automate, Power Pages, Azure, AI General, App General, or Other
-- **Account** — select an account from the dropdown
-- **Contact** — select a contact from the dropdown
+- **Category** — one of the nine categories
+- **Priority** — Eh / Low / High / Top Priority (or leave unset)
+- **Project** — optional project link
+- **Account** — optional account link
+- **Contact** — optional contact link
 - **Description** — free-text notes
 
 ### Editing / Deleting
 
-Use the pencil (edit) and trash (delete) icons in the Actions column, or click **Edit** from the detail card.
+Hover any row or card to reveal edit / delete icons. Click the row itself to open the detail dialog, which has an Edit button.

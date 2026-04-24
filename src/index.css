@@ -111,6 +111,9 @@
     --dash-pink: #ec4899;
     --dash-cyan: #06b6d4;
     --dash-slate: #64748b;
+    --dash-yellow: #eab308;
+    --dash-indigo: #6366f1;
+    --dash-teal: #0e7490;
 
     --dash-t-blue: #eff6ff;
     --dash-t-green: #ecfdf5;
@@ -120,7 +123,12 @@
     --dash-t-pink: #fdf2f8;
     --dash-t-slate: #f1f5f9;
     --dash-t-cyan: #ecfeff;
+    --dash-t-yellow: #fefce8;
+    --dash-t-indigo: #eef2ff;
+    --dash-t-teal: #ecfeff;
 
+    --dash-idea-soft: #fefce8;
+    --dash-meet-soft: #ecfeff;
     --dash-surface-3: #ebebee;
     --dash-shadow-xs: 0 1px 0 rgba(15,15,20,.04), 0 1px 2px rgba(15,15,20,.03);
     --dash-shadow-sm: 0 1px 0 rgba(15,15,20,.04), 0 2px 6px rgba(15,15,20,.04);
@@ -146,6 +154,9 @@
     --dash-pink: #f472b6;
     --dash-cyan: #22d3ee;
     --dash-slate: #94a3b8;
+    --dash-yellow: #facc15;
+    --dash-indigo: #818cf8;
+    --dash-teal: #22d3ee;
 
     --dash-t-blue: rgba(59,130,246,.12);
     --dash-t-green: rgba(34,197,94,.12);
@@ -155,7 +166,12 @@
     --dash-t-pink: rgba(236,72,153,.12);
     --dash-t-slate: rgba(100,116,139,.12);
     --dash-t-cyan: rgba(6,182,212,.12);
+    --dash-t-yellow: rgba(234,179,8,.14);
+    --dash-t-indigo: rgba(99,102,241,.14);
+    --dash-t-teal: rgba(14,116,144,.14);
 
+    --dash-idea-soft: rgba(234,179,8,.10);
+    --dash-meet-soft: rgba(14,116,144,.12);
     --dash-surface-3: #2c2c34;
     --dash-shadow-xs: 0 1px 0 rgba(0,0,0,.15), 0 1px 2px rgba(0,0,0,.1);
     --dash-shadow-sm: 0 1px 0 rgba(0,0,0,.15), 0 2px 6px rgba(0,0,0,.12);

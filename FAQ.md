@@ -156,6 +156,42 @@ Click the Moon/Sun button in the sidebar footer — below the Ctrl+K hint. Moon 
 
 Tailwind v4 dropped the `darkMode: "class"` config option from `tailwind.config.ts`. The equivalent in v4 is `@custom-variant dark (&:where(.dark, .dark *));` at the top of `src/index.css`. This tells Tailwind that `dark:` utility classes should activate when the `.dark` class is present on an ancestor element, which is what the `ThemeProvider` toggles. Without this line, all `dark:` classes in the app would be silently ignored.
 
+## How does the Ideas list view work (Phase 28)?
+
+The Ideas list was redesigned with the `--dash-*` Stripe/Retool design system and a warm yellow accent. Key elements:
+
+- **CategoryStrip in the hero** — a row of pills, one per category (AI General / Azure / Copilot Studio / Canvas / Model-Driven / Power Automate / Power Pages / App General / Other) with a colored dot and live count. Click a pill to filter; zero-count categories hide automatically
+- **Saved views:** All / Mine / New this week / High potential / Archived — all computed client-side
+- **Three view modes:** Table (category-grouped), Gallery (category-grouped card grid), Kanban (priority columns substituting for the brief's stage status — we don't have a stage field in Dataverse)
+- **CaptureComposer:** persistent floating composer in the bottom-right, `⌘⇧I` focuses, `⌘↵` captures, drafts autosave to localStorage every 500ms, minimizable to a FAB
+- **Quick-Add:** sticky inline row in the table view for fast one-liner capture; pressing ↵ saves into the currently-filtered category
+- **Promote flow:** per-row or bulk; opens a preview dialog that creates Work action items (Recognized / priority copied / account carried via `tdvsp_Customer@odata.bind`) and optionally archives the originating idea
+- **Archived = `statecode=1`** — `useAllIdeas()` fetches without the active filter so both active tabs and the Archived tab are driven from one client-side cache
+
+The brief's stage status (new / validating / planned), tags, linked-action-item back-link, and attendees list were punted since `tdvsp_Idea` doesn't have those fields. See `HOW-I-WAS-BUILT.md` Phase 28 for the full scope gap.
+
+## How does the Meetings list view work (Phase 28)?
+
+The Meetings page uses the `--dash-*` design system with a teal accent. Distinct visual character from Ideas — institutional, evidence-forward.
+
+- **Hero stats strip:** Total summaries / This week / With summary / 8-week cadence sparkline (pure SVG path + gradient fill + highlighted end dot, no chart library)
+- **Saved views:** All / Mine / This week / Needs summary / Pinned / Archived
+- **Three view modes:** Table (account-grouped with 42×42 date tiles — teal for future, muted for past), Gallery (account-grouped card grid), Timeline (Mon–Sun week grid centered on today, today outlined + haloed, off-week meetings in an overflow list)
+- **Account filter pill:** click a group header in Table or Gallery view to filter the entire page to that account
+- **Pin indicator:** meetings flagged via `tdvsp_pinned` show a teal pin icon next to the title in Table and Gallery
+- **Spawn action items:** the bulk bar (with a single selection) routes into the existing `ExtractActionItemsDialog` — the Azure OpenAI extraction we already had, now surfaced as a bulk action
+- **`⌘⇧M`** (or `Ctrl+Shift+M`) opens the new-summary dialog from anywhere
+
+The brief's type / outcome / attendees / keyQuote / tags / transcriptUrl / recordingUrl / spawnedActionItemIds / relatedIdeaIds were all omitted — `tdvsp_MeetingSummary` doesn't have those fields, so the columns and pills they'd drive aren't shown. "Needs summary" substitutes for "Has open follow-ups."
+
+## Why does the Ideas Kanban show priority columns instead of stage (new / validating / planned)?
+
+Because `tdvsp_Idea` has no stage field. The brief specified columns New / Validating / Planned / Archived, but the only lifecycle signal in Dataverse today is `statecode` (active vs archived). Rather than fake a stage with a text field or extend the schema in the v1 build, the kanban substitutes priority columns (Top Priority / High / Low / Eh / Unset) — it's still a useful way to triage ideas and maps directly to existing data. If the schema gains a stage field later, the kanban can swap column definitions without changing the orchestrator.
+
+## Why doesn't promoting an idea create a schema-level link to the action item?
+
+`tdvsp_ActionItem` has no `tdvsp_Idea` lookup. The Promote dialog creates a new action item with the idea's data copied over (name, description, priority, account), and optionally archives the idea via `statecode=1` to signal "promoted," but there's no back-link field that would support a "Promoted" saved view showing "ideas that became tasks." Adding the lookup is a schema change using the read-modify-write pattern in `scripts/apply-descriptions.py` (but for `RelationshipDefinitions`, not `AttributeDefinitions`). Until then, the originating idea is archived as a proxy for the link.
+
 ## How does the Action Items list view work (Phase 27)?
 
 The Action Items list was redesigned with the `--dash-*` Stripe/Retool design system. It is table-only (no card view) with:

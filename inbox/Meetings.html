@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>My Work — Meeting Summaries</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f8fa;
+    --surface: #ffffff;
+    --surface-2: #f1f4f7;
+    --surface-3: #e6ebf0;
+    --border: #e6eaef;
+    --border-strong: #d6dce3;
+    --ink-1: #0b0b0f;
+    --ink-2: #3a3a42;
+    --ink-3: #6b6b76;
+    --ink-4: #9a9aa4;
+    --brand: #5b2d8a;
+    --brand-2: #7a3fb5;
+    --meet: #0e7490;
+    --meet-2: #06b6d4;
+    --meet-soft: #ecfeff;
+    --c-blue:#3b82f6; --c-green:#22c55e; --c-amber:#f59e0b;
+    --c-red:#ef4444; --c-violet:#8b5cf6; --c-pink:#ec4899;
+    --c-cyan:#06b6d4; --c-slate:#64748b;
+    --t-blue:#eff6ff; --t-green:#ecfdf5; --t-amber:#fffbeb;
+    --t-red:#fef2f2; --t-violet:#f5f3ff; --t-pink:#fdf2f8; --t-slate:#f1f5f9; --t-cyan:#ecfeff;
+    --radius:10px; --radius-sm:6px;
+    --shadow-xs:0 1px 0 rgba(15,15,20,.04),0 1px 2px rgba(15,15,20,.03);
+    --shadow-card: 0 1px 0 rgba(15,15,20,.03), 0 1px 2px rgba(15,15,20,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; height:100%; }
+  body { font-family:'Inter',-apple-system,system-ui,sans-serif; font-size:13px; color:var(--ink-1); background:var(--bg); -webkit-font-smoothing:antialiased; letter-spacing:-0.005em; overflow:hidden; }
+  .mono { font-family:'JetBrains Mono',ui-monospace,monospace; letter-spacing:0; }
+  .app { display:grid; grid-template-rows:44px 1fr; height:100vh; }
+
+  .topbar { background:var(--brand); color:#fff; display:flex; align-items:center; padding:0 12px; gap:14px; font-size:13px; font-weight:500; }
+  .topbar .apps-grid { width:28px; height:28px; display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); gap:2px; padding:4px; border-radius:6px; }
+  .topbar .apps-grid span { background:rgba(255,255,255,.85); border-radius:1px; }
+  .topbar .sep { width:1px; height:16px; background:rgba(255,255,255,.25); }
+  .topbar .spacer { flex:1; }
+  .topbar .pill { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 10px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.2); border-radius:6px; font-size:12px; cursor:pointer; }
+  .topbar .icon-btn { width:28px; height:28px; display:grid; place-items:center; border-radius:6px; cursor:pointer; opacity:.85; }
+  .topbar .icon-btn:hover { background:rgba(255,255,255,.12); opacity:1; }
+  .topbar .avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#f5b17b,#c86a3d); border:1.5px solid rgba(255,255,255,.35); }
+
+  .body { display:grid; grid-template-columns:220px 1fr; min-height:0; }
+
+  .sidebar { background:var(--surface); border-right:1px solid var(--border); padding:10px 8px; display:flex; flex-direction:column; gap:4px; font-size:13px; overflow-y:auto; }
+  .sidebar .workspace { display:flex; align-items:center; gap:8px; padding:8px 10px; margin-bottom:6px; background:#eef2ff; color:#3730a3; border-radius:8px; font-weight:600; }
+  .sidebar .workspace .dot { width:18px; height:18px; border-radius:4px; background:#6366f1; display:grid; place-items:center; color:#fff; font-size:10px; font-weight:700; }
+  .sidebar .section-label { font-size:10px; font-weight:600; color:var(--ink-4); letter-spacing:0.08em; text-transform:uppercase; padding:12px 10px 4px; }
+  .sidebar .nav-item { display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:6px; color:var(--ink-2); cursor:pointer; position:relative; }
+  .sidebar .nav-item:hover { background:var(--surface-2); }
+  .sidebar .nav-item.active { background:var(--surface-2); color:var(--ink-1); font-weight:600; }
+  .sidebar .nav-item.active::before { content:''; position:absolute; left:0; top:6px; bottom:6px; width:3px; border-radius:0 2px 2px 0; background:var(--meet); }
+  .sidebar .nav-item .ico { width:16px; height:16px; color:var(--ink-3); flex-shrink:0; }
+  .sidebar .nav-item.active .ico { color:var(--meet); }
+  .sidebar .nav-item .count { margin-left:auto; font-size:11px; color:var(--ink-4); font-variant-numeric:tabular-nums; }
+  .sidebar .footer { margin-top:auto; padding:8px 10px; display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--border); font-size:12px; color:var(--ink-3); }
+  .sidebar .kbd { font-family:'JetBrains Mono',monospace; font-size:10px; padding:1px 5px; background:var(--surface-2); border:1px solid var(--border); border-radius:3px; color:var(--ink-3); }
+  .sidebar .footer-row { display:flex; align-items:center; gap:8px; }
+
+  .main { display:grid; grid-template-rows:auto auto auto 1fr; min-height:0; overflow:hidden; }
+
+  .quick-create { display:flex; align-items:center; gap:8px; padding:10px 18px 4px; flex-wrap:wrap; }
+  .qc-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--ink-4); margin-right:4px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 9px; border-radius:999px; background:var(--surface); border:1px solid var(--border-strong); font-size:11px; font-weight:500; color:var(--ink-2); cursor:pointer; }
+  .chip.work{color:#ea580c;background:#fff7ed;border-color:#fed7aa}
+  .chip.personal{color:#db2777;background:#fdf2f8;border-color:#fbcfe8}
+  .chip.learning{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
+  .chip.idea{color:#ca8a04;background:#fefce8;border-color:#fde68a}
+  .chip.meeting{color:#0891b2;background:#ecfeff;border-color:#a5f3fc}
+  .chip.project{color:#2563eb;background:#eff6ff;border-color:#bfdbfe}
+  .chip.account{color:#059669;background:#ecfdf5;border-color:#a7f3d0}
+  .chip.contact{color:#4f46e5;background:#eef2ff;border-color:#c7d2fe}
+
+  /* Hero — meetings-specific visual character:
+     horizontal timeline strip as the hero anchor */
+  .hero { padding: 10px 18px 12px; display: flex; flex-direction: column; gap: 12px; }
+  .hero-row { display: flex; align-items: center; gap: 14px; }
+  .hero-tile {
+    width: 38px; height: 38px; border-radius: 9px;
+    background: linear-gradient(135deg, #cffafe, #a5f3fc);
+    color: #0e7490;
+    display: grid; place-items: center;
+    border: 1px solid #a5f3fc;
+  }
+  .hero h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .hero .sub { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-4); }
+  .hero .spacer { flex: 1; }
+  .hero .btn-row { display:inline-flex; gap: 8px; }
+
+  /* Stats strip with weekly sparkline */
+  .stats-strip {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 2fr;
+    gap: 10px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 2px;
+    box-shadow: var(--shadow-card);
+  }
+  .stat-card .label {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-4);
+  }
+  .stat-card .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px; font-weight: 700; color: var(--ink-1);
+    letter-spacing: -0.02em;
+  }
+  .stat-card .delta { font-size: 11px; color: var(--ink-3); }
+  .stat-card .delta.up { color: #0e7490; }
+  .stat-card.spark { display: flex; flex-direction: row; align-items: flex-end; gap: 12px; }
+  .stat-card.spark .textblock { display: flex; flex-direction: column; gap: 2px; }
+  .stat-card.spark svg { flex: 1; height: 38px; width: 100%; max-width: 100%; }
+
+  /* Buttons */
+  .btn { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 12px; border-radius:7px; background:var(--surface); border:1px solid var(--border-strong); font-size:12px; font-weight:500; color:var(--ink-2); cursor:pointer; }
+  .btn:hover { background:var(--surface-2); }
+  .btn.primary { background:var(--ink-1); color:#fff; border-color:var(--ink-1); }
+  .btn.meet-btn {
+    background: linear-gradient(135deg, #06b6d4, #0e7490);
+    color: #fff; border-color: #0e7490;
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(14,116,144,.3);
+  }
+  .btn.meet-btn:hover { background: linear-gradient(135deg, #22d3ee, #06b6d4); }
+  .btn .ico { width:13px; height:13px; }
+  .btn.icon-only { padding: 0; width: 30px; justify-content: center; }
+
+  /* Capture row */
+  .capture-row { display: flex; align-items: center; gap: 10px; padding: 0 18px 10px; }
+  .capture-box { flex: 1; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px; }
+  .capture-box input { flex: 1; border: 0; outline: 0; font-family: inherit; font-size: 13px; background: transparent; color: var(--ink-1); }
+  .capture-box input::placeholder { color: var(--ink-4); }
+  .capture-box .kbd { font-family:'JetBrains Mono',monospace; font-size:10px; padding:1px 5px; background:var(--surface-2); border:1px solid var(--border); border-radius:3px; color:var(--ink-4); }
+
+  /* View tabs */
+  .views { display: flex; align-items: flex-end; padding: 0 18px; border-bottom: 1px solid var(--border); gap: 2px; }
+  .view-tab { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 9px; font-size: 12px; font-weight: 500; color: var(--ink-3); cursor: pointer; border: 1px solid transparent; border-bottom: 0; border-radius: 7px 7px 0 0; margin-bottom: -1px; }
+  .view-tab:hover { color: var(--ink-2); }
+  .view-tab.on { color: var(--ink-1); background: var(--surface); border-color: var(--border); font-weight: 600; }
+  .view-tab .count { font-family:'JetBrains Mono',monospace; font-size:10px; padding:1px 6px; border-radius:10px; background: var(--surface-2); color: var(--ink-3); border:1px solid var(--border); font-weight: 600; }
+  .view-tab.add { color: var(--ink-4); padding: 8px 10px 9px; }
+
+  /* Subtoolbar */
+  .subtool { display: flex; align-items: center; gap: 8px; padding: 8px 18px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .filter-pill { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 9px; background:var(--surface); border:1px solid var(--border-strong); border-radius:6px; font-size:11px; font-weight:500; color:var(--ink-2); cursor:pointer; }
+  .filter-pill .lbl-key { font-size:10px; color:var(--ink-4); font-weight:500; text-transform:uppercase; letter-spacing:0.06em; }
+  .filter-pill.on { background:var(--meet); color:#fff; border-color:var(--meet); }
+  .filter-pill.on .lbl-key { color:rgba(255,255,255,.55); }
+  .filter-pill .ico { width:12px; height:12px; }
+  .filter-pill.dashed { border-style: dashed; color: var(--ink-4); }
+  .seg { display:inline-flex; background:var(--surface); border:1px solid var(--border-strong); border-radius:6px; padding:2px; height:28px; }
+  .seg button { height:22px; padding:0 9px; background:transparent; border:0; border-radius:4px; font-size:11px; font-weight:500; color:var(--ink-3); cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:5px; }
+  .seg button.on { background:var(--meet); color:#fff; }
+  .meta-count { margin-left:auto; font-size:11px; color:var(--ink-4); font-family:'JetBrains Mono',monospace; }
+
+  .content-wrap { overflow: auto; min-height: 0; background: var(--bg); position: relative; }
+
+  /* Quick add row (teal) */
+  .quick-add { background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 14px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 3; }
+  .quick-add .plus { width: 22px; height: 22px; border-radius: 6px; background: var(--meet-soft); color: var(--meet); display: grid; place-items: center; border: 1px dashed #a5f3fc; }
+  .quick-add input { flex: 1; border: 0; outline: 0; font-family: inherit; font-size: 13px; color: var(--ink-1); background: transparent; padding: 4px 0; }
+  .quick-add input::placeholder { color: var(--ink-4); font-style: italic; }
+  .quick-add .hint { font-size: 11px; color: var(--ink-4); }
+  .quick-add .hint .kbd { font-family:'JetBrains Mono',monospace; font-size:10px; padding: 1px 5px; background:var(--surface-2); border:1px solid var(--border); border-radius:3px; color:var(--ink-3); }
+
+  /* Table */
+  .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; }
+  .table thead th { position: sticky; top: 39px; background: var(--bg); z-index: 2; text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-4); padding: 10px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; }
+  .table thead th.col-check { width: 36px; padding-right: 0; }
+  .table thead th.col-actions { width: 76px; text-align: right; }
+  .table thead th .sort-ico { display: inline-block; width: 10px; height: 10px; margin-left: 4px; vertical-align: middle; opacity: 0.3; }
+  .table thead th.sort-desc .sort-ico { opacity: 1; color: var(--ink-1); }
+
+  /* Account group header */
+  .group-row td { background: var(--bg); padding: 16px 10px 6px; border-bottom: 1px solid var(--border); }
+  .group-head { display: inline-flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+  .group-head .avatar { width: 22px; height: 22px; border-radius: 5px; display: grid; place-items: center; color: #fff; font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .group-head .name { font-size: 13px; font-weight: 600; color: var(--ink-1); letter-spacing: -0.005em; }
+  .group-head .count { font-family:'JetBrains Mono',monospace; font-size:11px; padding:1px 7px; border-radius:10px; background: var(--surface); color: var(--ink-2); border:1px solid var(--border-strong); font-weight: 600; }
+  .group-head .hint { font-size: 11px; color: var(--ink-4); font-family:'JetBrains Mono',monospace; }
+  .group-head .chev { width: 14px; height: 14px; color: var(--ink-4); cursor: pointer; }
+
+  /* Rows */
+  .table tbody tr.row-item { background: var(--surface); transition: background 0.12s; }
+  .table tbody tr.row-item:hover { background: var(--surface-2); }
+  .table tbody tr.row-item.selected { background: var(--meet-soft); }
+  .table tbody td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; position: relative; }
+  .table tbody tr.row-item td.col-check { padding-left: 14px; }
+
+  /* Checkbox */
+  .chk { width: 15px; height: 15px; border: 1.5px solid var(--border-strong); border-radius: 3px; background: var(--surface); cursor: pointer; display: grid; place-items: center; flex-shrink: 0; }
+  .chk.on { background: var(--ink-1); border-color: var(--ink-1); }
+  .chk.on::after { content: ''; width: 8px; height: 8px; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") no-repeat center/contain; }
+
+  /* Title cell with inline date card on left (meeting-specific) */
+  .c-meeting { display: flex; align-items: stretch; gap: 10px; min-width: 360px; max-width: 500px; }
+  .date-tile {
+    width: 42px; height: 42px; border-radius: 7px;
+    background: var(--meet-soft);
+    border: 1px solid #a5f3fc;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #0e7490;
+    flex-shrink: 0;
+  }
+  .date-tile .month { font-size: 8px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1; margin-bottom: 2px; }
+  .date-tile .day { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; line-height: 1; }
+  .date-tile.past { background: var(--surface-2); color: var(--ink-3); border-color: var(--border-strong); }
+
+  .c-meeting .body { min-width: 0; flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; }
+  .c-meeting .title-row { display: flex; align-items: center; gap: 8px; }
+  .c-meeting .name-text { font-size: 13px; font-weight: 600; color: var(--ink-1); letter-spacing: -0.005em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-meeting .type-pill {
+    display: inline-flex; align-items: center;
+    padding: 1px 6px; border-radius: 3px;
+    font-size: 9.5px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .type-pill.t-disc { background: var(--t-blue); color: #1d4ed8; }
+  .type-pill.t-rev { background: var(--t-violet); color: #6d28d9; }
+  .type-pill.t-strat { background: var(--t-amber); color: #b45309; }
+  .type-pill.t-sync { background: var(--t-slate); color: #475569; }
+  .type-pill.t-pitch { background: var(--t-pink); color: #be185d; }
+  .c-meeting .summary { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-meeting .quote { font-style: italic; color: var(--ink-3); }
+
+  /* Account chip */
+  .c-account { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .acc-avatar { width: 20px; height: 20px; border-radius: 5px; display: grid; place-items: center; color: #fff; font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; flex-shrink: 0; }
+  .acc-avatar.blank { background: var(--surface-2); color: var(--ink-4); border: 1px dashed var(--border-strong); }
+  .acc-pa { background: var(--c-blue); } .acc-ph { background: var(--c-green); }
+  .acc-ny { background: var(--c-amber); } .acc-la { background: var(--c-violet); }
+  .acc-mc { background: #f97316; } .acc-tx { background: var(--c-red); }
+  .acc-md { background: #db2777; } .acc-ch { background: #6366f1; }
+
+  /* Attendees */
+  .c-attendees { display: flex; align-items: center; }
+  .avatar-xs { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 9px; font-weight: 700; font-family:'JetBrains Mono',monospace; border: 1.5px solid var(--surface); flex-shrink: 0; }
+  .avatar-xs.me { background: linear-gradient(135deg,#f5b17b,#c86a3d); }
+  .avatar-xs.t1 { background: linear-gradient(135deg,#6366f1,#8b5cf6); }
+  .avatar-xs.t2 { background: linear-gradient(135deg,#22c55e,#06b6d4); }
+  .avatar-xs.t3 { background: linear-gradient(135deg,#ec4899,#f59e0b); }
+  .avatar-xs.t4 { background: linear-gradient(135deg,#64748b,#334155); }
+  .avatar-stack { display: flex; }
+  .avatar-stack .avatar-xs + .avatar-xs { margin-left: -6px; }
+
+  /* Date + relative */
+  .c-when { font-family:'JetBrains Mono',monospace; font-size: 11px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .c-when .rel { display: block; font-size: 10px; color: var(--ink-4); margin-top: 1px; font-family: 'Inter', sans-serif; font-weight: 500; }
+  .c-when .rel.today { color: var(--meet); font-weight: 600; }
+
+  /* Outcome pill */
+  .pill-sm { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; font-family:'JetBrains Mono',monospace; letter-spacing:0.02em; text-transform:uppercase; white-space: nowrap; }
+  .pill-sm.o-dec { background: var(--t-green); color: #047857; }
+  .pill-sm.o-fol { background: var(--t-blue); color: #1d4ed8; }
+  .pill-sm.o-blk { background: var(--t-red); color: #b91c1c; }
+  .pill-sm.o-info { background: var(--t-slate); color: #475569; }
+
+  /* Action items spawned */
+  .c-spawned { display: inline-flex; align-items: center; gap: 4px; font-family:'JetBrains Mono',monospace; font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--meet-soft); color: var(--meet); border: 1px solid #a5f3fc; }
+  .c-spawned.none { background: transparent; color: var(--ink-4); border-color: transparent; padding-left: 2px; }
+  .c-spawned svg { width: 10px; height: 10px; }
+
+  /* Actions */
+  .c-actions { text-align: right; padding-right: 14px !important; }
+  .action-btns { display: inline-flex; gap: 2px; opacity: 0; transition: opacity 0.12s; }
+  .row-item:hover .action-btns { opacity: 1; }
+  .action-btns button { height: 22px; padding: 0 7px; background: transparent; border: 0; border-radius: 4px; color: var(--ink-3); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; font-family: inherit; letter-spacing: 0.02em; text-transform: uppercase; }
+  .action-btns button:hover { background: var(--surface-3); color: var(--ink-1); }
+  .action-btns button.open { background: var(--meet-soft); color: var(--meet); }
+  .action-btns button.open:hover { background: #a5f3fc; color: #0e7490; }
+  .action-btns button.danger:hover { color: var(--c-red); }
+  .action-btns svg { width: 11px; height: 11px; }
+
+  /* Gallery view */
+  .gallery { display: none; padding: 14px 18px; }
+  .gallery.on { display: block; }
+  .gallery-group + .gallery-group { margin-top: 22px; }
+  .gallery-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .meet-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px;
+    display: flex; flex-direction: column; gap: 8px;
+    min-height: 160px; box-shadow: var(--shadow-card);
+    cursor: pointer; transition: transform .1s, box-shadow .1s;
+  }
+  .meet-card:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(15,15,20,.06); }
+  .meet-card .mc-head { display: flex; align-items: center; gap: 8px; }
+  .meet-card .mc-name { font-size: 13px; font-weight: 600; color: var(--ink-1); letter-spacing: -0.005em; line-height: 1.35; }
+  .meet-card .mc-summary { font-size: 11.5px; color: var(--ink-3); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .meet-card .mc-foot { margin-top: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .meet-card .mc-foot .c-spawned { font-size: 10px; padding: 1px 6px; }
+
+  /* Timeline view */
+  .timeline { display: none; padding: 14px 18px 20px; overflow-x: auto; overflow-y: hidden; }
+  .timeline.on { display: block; }
+  .timeline-head {
+    display: flex; gap: 8px; margin-bottom: 12px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-4);
+  }
+  .timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(180px, 1fr));
+    gap: 8px;
+    min-width: 1300px;
+  }
+  .day-col {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px; min-height: 260px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .day-col .day-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .day-col .day-head .dow { font-size: 10px; font-weight: 600; color: var(--ink-4); letter-spacing: 0.06em; text-transform: uppercase; }
+  .day-col .day-head .dnum { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: var(--ink-1); }
+  .day-col.today .day-head .dnum { color: var(--meet); }
+  .day-col.today { border-color: var(--meet-2); box-shadow: 0 0 0 2px var(--meet-soft); }
+  .tl-event {
+    background: var(--meet-soft); border: 1px solid #a5f3fc;
+    border-radius: 7px; padding: 7px 9px;
+    display: flex; flex-direction: column; gap: 3px; cursor: pointer;
+  }
+  .tl-event:hover { background: #a5f3fc; }
+  .tl-event .time { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #0e7490; font-weight: 600; }
+  .tl-event .name { font-size: 11.5px; font-weight: 600; color: var(--ink-1); line-height: 1.35; }
+  .tl-event .sub { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--ink-3); }
+  .tl-event.past { background: var(--surface-2); border-color: var(--border-strong); }
+  .tl-event.past .time { color: var(--ink-3); }
+
+  /* Bulk bar */
+  .bulk-bar { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink-1); color: #fff; border-radius: 10px; padding: 8px 10px 8px 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 28px rgba(15,15,20,.2); z-index: 20; font-size: 12px; }
+  .bulk-bar .count { font-family:'JetBrains Mono',monospace; font-weight:600; padding:2px 8px; border-radius:4px; background: rgba(255,255,255,.12); }
+  .bulk-bar .bb-btn { display:inline-flex; align-items:center; gap:5px; padding: 4px 10px; border-radius:5px; background: transparent; border: 0; color: #fff; font-weight:500; cursor:pointer; font-family:inherit; font-size: 12px; }
+  .bulk-bar .bb-btn:hover { background: rgba(255,255,255,.12); }
+  .bulk-bar .bb-btn.spawn { background: var(--meet-2); color: #083344; }
+  .bulk-bar .bb-btn.danger { color: #fca5a5; }
+  .bulk-bar .bb-btn .ico { width:12px; height:12px; }
+  .bulk-bar .sep { width: 1px; height: 18px; background: rgba(255,255,255,.18); }
+</style>
+</head>
+<body>
+
+<div class="app" data-screen-label="Meetings">
+
+  <div class="topbar">
+    <div class="apps-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div>Power Apps</div>
+    <div class="sep"></div>
+    <div style="opacity:.9">My Work Code App (GCC)</div>
+    <div class="spacer"></div>
+    <div class="pill"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share</div>
+    <div class="icon-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+    <div class="icon-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    <div class="icon-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+    <div class="avatar"></div>
+  </div>
+
+  <div class="body">
+
+    <div class="sidebar">
+      <div class="workspace">
+        <div class="dot">M</div>
+        <div>My Work</div>
+      </div>
+      <div class="section-label">Insights</div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18"/></svg>My Board</div>
+
+      <div class="section-label">Activity</div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Action Items<span class="count mono">30</span></div>
+
+      <div class="section-label">Capture</div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7A3 3 0 0 1 9 18h6a3 3 0 0 1 1-3.3A7 7 0 0 0 12 2z"/></svg>Ideas<span class="count mono">47</span></div>
+      <div class="nav-item active"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>Meetings<span class="count mono">18</span></div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Projects<span class="count mono">5</span></div>
+
+      <div class="section-label">Core</div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>Accounts<span class="count mono">4</span></div>
+      <div class="nav-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Contacts<span class="count mono">47</span></div>
+
+      <div class="footer">
+        <div class="footer-row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Search</span><span class="kbd" style="margin-left:auto">Ctrl+K</span></div>
+        <div class="footer-row"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><span>Dark mode</span></div>
+        <div style="font-size: 10px; color: var(--ink-4); margin-top: 4px;">Power Platform · v2.4</div>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <div class="quick-create">
+        <span class="qc-label">Quick Create</span>
+        <button class="chip work">work</button>
+        <button class="chip personal">personal</button>
+        <button class="chip learning">learning</button>
+        <button class="chip idea">idea</button>
+        <button class="chip meeting">meeting</button>
+        <button class="chip project">project</button>
+        <button class="chip account">account</button>
+        <button class="chip contact">contact</button>
+      </div>
+
+      <!-- Hero: title + stats with sparkline -->
+      <div class="hero">
+        <div class="hero-row">
+          <div class="hero-tile">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+          </div>
+          <div>
+            <div class="sub">Capture key meeting outcomes and notes</div>
+            <h1>Meeting Summaries</h1>
+          </div>
+          <div class="spacer"></div>
+          <div class="btn-row">
+            <button class="btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Upload transcript</button>
+            <button class="btn meet-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Summary</button>
+          </div>
+        </div>
+
+        <div class="stats-strip">
+          <div class="stat-card"><div class="label">Total summaries</div><div class="val">18</div><div class="delta">Across 7 accounts</div></div>
+          <div class="stat-card"><div class="label">This week</div><div class="val">5</div><div class="delta up">▲ +2 vs last wk</div></div>
+          <div class="stat-card"><div class="label">Action items spawned</div><div class="val">24</div><div class="delta">14 still open</div></div>
+          <div class="stat-card spark">
+            <div class="textblock"><div class="label">Per week</div><div class="val" style="font-size:16px">8w trend</div></div>
+            <svg viewBox="0 0 200 38" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M0,28 L25,22 L50,18 L75,24 L100,14 L125,16 L150,10 L175,12 L200,6" fill="none" stroke="#0e7490" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M0,28 L25,22 L50,18 L75,24 L100,14 L125,16 L150,10 L175,12 L200,6 L200,38 L0,38 Z" fill="url(#sparkFill)"/>
+              <!-- dots -->
+              <circle cx="0"   cy="28" r="1.5" fill="#0e7490"/>
+              <circle cx="25"  cy="22" r="1.5" fill="#0e7490"/>
+              <circle cx="50"  cy="18" r="1.5" fill="#0e7490"/>
+              <circle cx="75"  cy="24" r="1.5" fill="#0e7490"/>
+              <circle cx="100" cy="14" r="1.5" fill="#0e7490"/>
+              <circle cx="125" cy="16" r="1.5" fill="#0e7490"/>
+              <circle cx="150" cy="10" r="1.5" fill="#0e7490"/>
+              <circle cx="175" cy="12" r="1.5" fill="#0e7490"/>
+              <circle cx="200" cy="6"  r="2.5" fill="#06b6d4" stroke="#fff" stroke-width="1.5"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search / export row -->
+      <div class="capture-row">
+        <div class="capture-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input placeholder="Search meeting summaries, attendees, decisions…" />
+          <span class="kbd">/</span>
+        </div>
+        <button class="btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+      </div>
+
+      <!-- Saved views -->
+      <div class="views">
+        <div class="view-tab on">All <span class="count">18</span></div>
+        <div class="view-tab">This week <span class="count">5</span></div>
+        <div class="view-tab">Needs summary <span class="count">3</span></div>
+        <div class="view-tab">Has open follow-ups <span class="count">9</span></div>
+        <div class="view-tab">Mine <span class="count">14</span></div>
+        <div class="view-tab add"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Save view</div>
+      </div>
+
+      <!-- Subtoolbar -->
+      <div class="subtool">
+        <button class="filter-pill on"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>Group <span class="lbl-key">by</span> Account</button>
+        <button class="filter-pill"><span class="lbl-key">Type</span> Any</button>
+        <button class="filter-pill"><span class="lbl-key">Date</span> Any</button>
+        <button class="filter-pill"><span class="lbl-key">Outcome</span> Any</button>
+        <button class="filter-pill"><span class="lbl-key">Attendee</span> Any</button>
+        <button class="filter-pill dashed"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add filter</button>
+
+        <div style="flex:1"></div>
+
+        <span class="meta-count">18 meetings</span>
+
+        <div class="seg" id="view-seg" title="View">
+          <button class="on" data-view="table" title="Table"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+          <button data-view="gallery" title="Gallery"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+          <button data-view="timeline" title="Timeline"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/></svg></button>
+        </div>
+        <button class="btn icon-only" title="Column settings"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg></button>
+      </div>
+
+      <!-- ========= TABLE VIEW ========= -->
+      <div class="content-wrap" id="view-table">
+
+        <!-- Quick add -->
+        <div class="quick-add">
+          <div class="plus"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          <input placeholder="Log a new meeting summary — title first, details after…" />
+          <span class="hint">Press <span class="kbd">↵</span> to save · <span class="kbd">Tab</span> to add account</span>
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="col-check"><div class="chk"></div></th>
+              <th>Title & notes</th>
+              <th>Type</th>
+              <th>Attendees</th>
+              <th>Outcome</th>
+              <th>Spawned</th>
+              <th class="sort-desc">Date <svg class="sort-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- ===== Commonwealth of PA ===== -->
+            <tr class="group-row"><td colspan="8">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <div class="avatar acc-pa">PA</div>
+                <span class="name">Commonwealth of Pennsylvania</span>
+                <span class="count mono">3 meetings</span>
+                <span class="hint">5 action items spawned · 2 open</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td>
+                <div class="c-meeting">
+                  <div class="date-tile past"><span class="month">Mar</span><span class="day">27</span></div>
+                  <div class="body">
+                    <div class="title-row"><span class="name-text">PA Benefits Modernization Discovery</span><span class="type-pill t-disc">Discovery</span></div>
+                    <div class="summary">Reviewed 3 key pain points in SNAP intake; Dept. leads bought into AI Builder PoC approach.</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="type-pill t-disc">Discovery</span></td>
+              <td><div class="c-attendees"><div class="avatar-stack"><div class="avatar-xs me">ME</div><div class="avatar-xs t1">JK</div><div class="avatar-xs t2">RS</div><div class="avatar-xs t4">+3</div></div></div></td>
+              <td><span class="pill-sm o-dec">Decisions</span></td>
+              <td><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>3</span></td>
+              <td><span class="c-when">3/27/2026<span class="rel">4w ago</span></span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7"/></svg>Open</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <tr class="row-item selected">
+              <td class="col-check"><div class="chk on"></div></td>
+              <td>
+                <div class="c-meeting">
+                  <div class="date-tile"><span class="month">Apr</span><span class="day">09</span></div>
+                  <div class="body">
+                    <div class="title-row"><span class="name-text">PA Eligibility PoC Scope Review</span><span class="type-pill t-rev">Review</span></div>
+                    <div class="summary quote">"Form recognition accuracy must exceed 95% for production cutover; model-driven app is stretch goal."</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="type-pill t-rev">Review</span></td>
+              <td><div class="c-attendees"><div class="avatar-stack"><div class="avatar-xs me">ME</div><div class="avatar-xs t1">JK</div><div class="avatar-xs t3">+2</div></div></div></td>
+              <td><span class="pill-sm o-fol">Follow-ups</span></td>
+              <td><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>2</span></td>
+              <td><span class="c-when">4/09/2026<span class="rel">2w ago</span></span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7"/></svg>Open</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== City of Philadelphia ===== -->
+            <tr class="group-row"><td colspan="8">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <div class="avatar acc-ph">PH</div>
+                <span class="name">City of Philadelphia</span>
+                <span class="count mono">2 meetings</span>
+                <span class="hint">4 action items spawned · 3 open</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td>
+                <div class="c-meeting">
+                  <div class="date-tile past"><span class="month">Mar</span><span class="day">14</span></div>
+                  <div class="body">
+                    <div class="title-row"><span class="name-text">Philly 311 Pilot Kickoff</span><span class="type-pill t-sync">Sync</span></div>
+                    <div class="summary">Kickoff with 311 ops + Copilot Studio team. Pilot scope: Spanish-language agent for top 20 request types.</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="type-pill t-sync">Sync</span></td>
+              <td><div class="c-attendees"><div class="avatar-stack"><div class="avatar-xs me">ME</div><div class="avatar-xs t2">AN</div><div class="avatar-xs t3">+4</div></div></div></td>
+              <td><span class="pill-sm o-dec">Decisions</span></td>
+              <td><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>4</span></td>
+              <td><span class="c-when">3/14/2026<span class="rel">6w ago</span></span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7"/></svg>Open</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== New York State ITS ===== -->
+            <tr class="group-row"><td colspan="8">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <div class="avatar acc-ny">NY</div>
+                <span class="name">New York State ITS</span>
+                <span class="count mono">2 meetings</span>
+                <span class="hint">6 action items spawned · 4 open</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td>
+                <div class="c-meeting">
+                  <div class="date-tile"><span class="month">Apr</span><span class="day">11</span></div>
+                  <div class="body">
+                    <div class="title-row"><span class="name-text">NY ITS Copilot Studio Deep Dive</span><span class="type-pill t-strat">Strategy</span></div>
+                    <div class="summary quote">"We need grounding on internal KB before any public-facing rollout — security review is blocking."</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="type-pill t-strat">Strategy</span></td>
+              <td><div class="c-attendees"><div class="avatar-stack"><div class="avatar-xs me">ME</div><div class="avatar-xs t1">BL</div><div class="avatar-xs t2">CF</div><div class="avatar-xs t3">+2</div></div></div></td>
+              <td><span class="pill-sm o-blk">Blocked</span></td>
+              <td><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>5</span></td>
+              <td><span class="c-when">4/11/2026<span class="rel">12d ago</span></span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7"/></svg>Open</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== LA County ===== -->
+            <tr class="group-row"><td colspan="8">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <div class="avatar acc-la">LA</div>
+                <span class="name">Los Angeles County</span>
+                <span class="count mono">2 meetings</span>
+                <span class="hint">3 action items spawned · 2 open</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td>
+                <div class="c-meeting">
+                  <div class="date-tile past"><span class="month">Apr</span><span class="day">01</span></div>
+                  <div class="body">
+                    <div class="title-row"><span class="name-text">LA County Emergency Mgmt Requirements</span><span class="type-pill t-disc">Discovery</span></div>
+                    <div class="summary">Offline-first intake is non-negotiable. Field workers lose signal in wildfire zones — must queue and sync.</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="type-pill t-disc">Discovery</span></td>
+              <td><div class="c-attendees"><div class="avatar-stack"><div class="avatar-xs me">ME</div><div class="avatar-xs t2">DS</div><div class="avatar-xs t4">+1</div></div></div></td>
+              <td><span class="pill-sm o-fol">Follow-ups</span></td>
+              <td><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>3</span></td>
+              <td><span class="c-when">4/01/2026<span class="rel">3w ago</span></span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7"/></svg>Open</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Chicago ===== -->
+            <tr class="group-row"><td colspan="8">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <div class="avatar acc-ch">CH</div>
+                <span class="name">City of Chicago</span>
+                <span class="count mono">1 meeting</span>
+                <span class="hint">2 action items spawned · 2 open</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td>
+                <div class="c-meeting">
+                  <div class="date-tile"><span class="month">Apr</span><span class="day">07</span></div>
+                  <div class="body">
+                    <div class="title-row"><span class="name-text">Chicago Smart City RFI Discussion</span><span class="type-pill t-pitch">Pitch</span></div>
+                    <div class="summary">Walked through 4 SLG reference architectures. Strong interest in Copilot Studio + Azure AI combo.</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="type-pill t-pitch">Pitch</span></td>
+              <td><div class="c-attendees"><div class="avatar-stack"><div class="avatar-xs me">ME</div><div class="avatar-xs t1">AN</div><div class="avatar-xs t4">+3</div></div></div></td>
+              <td><span class="pill-sm o-fol">Follow-ups</span></td>
+              <td><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>2</span></td>
+              <td><span class="c-when">4/07/2026<span class="rel">16d ago</span></span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7"/></svg>Open</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Maricopa ===== -->
+            <tr class="group-row"><td colspan="8">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <div class="avatar acc-mc">MC</div>
+                <span class="name">Maricopa County</span>
+                <span class="count mono">1 meeting</span>
+                <span class="hint">1 action item spawned · 1 open</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td>
+                <div class="c-meeting">
+                  <div class="date-tile"><span class="month">Apr</span><span class="day">10</span></div>
+                  <div class="body">
+                    <div class="title-row"><span class="name-text">Maricopa Records Portal Workshop</span><span class="type-pill t-sync">Sync</span></div>
+                    <div class="summary">PII redaction workflow walkthrough; county counsel raised privacy concerns around data retention.</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="type-pill t-sync">Sync</span></td>
+              <td><div class="c-attendees"><div class="avatar-stack"><div class="avatar-xs me">ME</div><div class="avatar-xs t2">+2</div></div></div></td>
+              <td><span class="pill-sm o-info">Info only</span></td>
+              <td><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>1</span></td>
+              <td><span class="c-when">4/10/2026<span class="rel">13d ago</span></span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7"/></svg>Open</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+            <!-- ===== Internal / no account ===== -->
+            <tr class="group-row"><td colspan="8">
+              <div class="group-head">
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <div class="avatar blank acc-avatar">—</div>
+                <span class="name" style="color: var(--ink-3)">Internal / No account</span>
+                <span class="count mono">2 meetings</span>
+                <span class="hint">team syncs</span>
+              </div>
+            </td></tr>
+
+            <tr class="row-item">
+              <td class="col-check"><div class="chk"></div></td>
+              <td>
+                <div class="c-meeting">
+                  <div class="date-tile"><span class="month">Apr</span><span class="day">12</span></div>
+                  <div class="body">
+                    <div class="title-row"><span class="name-text">Code Apps Tech Series Prep</span><span class="type-pill t-sync">Sync</span></div>
+                    <div class="summary">Prepped April 22 session. Demo flow locked in; JK will build slide deck.</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="type-pill t-sync">Sync</span></td>
+              <td><div class="c-attendees"><div class="avatar-stack"><div class="avatar-xs me">ME</div><div class="avatar-xs t1">JK</div></div></div></td>
+              <td><span class="pill-sm o-dec">Decisions</span></td>
+              <td><span class="c-spawned none">—</span></td>
+              <td><span class="c-when">4/12/2026<span class="rel">11d ago</span></span></td>
+              <td class="c-actions"><div class="action-btns">
+                <button class="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3h7v7M10 14L21 3M21 14v7H3V3h7"/></svg>Open</button>
+                <button class="danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></button>
+              </div></td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ========= GALLERY VIEW ========= -->
+      <div class="gallery" id="view-gallery">
+        <div class="gallery-group">
+          <div class="gallery-head"><div class="acc-avatar acc-pa" style="width:22px; height:22px; border-radius:5px;">PA</div><span style="font-weight:600">Commonwealth of Pennsylvania</span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-3);">3 meetings</span></div>
+          <div class="gallery-grid">
+            <div class="meet-card">
+              <div class="mc-head"><div class="date-tile" style="width:36px;height:36px;"><span class="month">Apr</span><span class="day" style="font-size:13px">09</span></div><div><div class="mc-name">PA Eligibility PoC Scope Review</div><div style="font-size:10px; color: var(--ink-4);">2w ago · 5 attendees</div></div></div>
+              <div class="mc-summary">"Form recognition accuracy must exceed 95% for production cutover; model-driven app is stretch goal."</div>
+              <div class="mc-foot"><span class="type-pill t-rev">Review</span><span class="pill-sm o-fol">Follow-ups</span><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>2</span></div>
+            </div>
+            <div class="meet-card">
+              <div class="mc-head"><div class="date-tile past" style="width:36px;height:36px;"><span class="month">Mar</span><span class="day" style="font-size:13px">27</span></div><div><div class="mc-name">PA Benefits Modernization Discovery</div><div style="font-size:10px; color: var(--ink-4);">4w ago · 6 attendees</div></div></div>
+              <div class="mc-summary">Reviewed 3 key pain points in SNAP intake; Dept. leads bought into AI Builder PoC approach.</div>
+              <div class="mc-foot"><span class="type-pill t-disc">Discovery</span><span class="pill-sm o-dec">Decisions</span><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>3</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-group">
+          <div class="gallery-head"><div class="acc-avatar acc-ny" style="width:22px; height:22px; border-radius:5px;">NY</div><span style="font-weight:600">New York State ITS</span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-3);">2 meetings</span></div>
+          <div class="gallery-grid">
+            <div class="meet-card">
+              <div class="mc-head"><div class="date-tile" style="width:36px;height:36px;"><span class="month">Apr</span><span class="day" style="font-size:13px">11</span></div><div><div class="mc-name">NY ITS Copilot Studio Deep Dive</div><div style="font-size:10px; color: var(--ink-4);">12d ago · 5 attendees</div></div></div>
+              <div class="mc-summary">"We need grounding on internal KB before any public-facing rollout — security review is blocking."</div>
+              <div class="mc-foot"><span class="type-pill t-strat">Strategy</span><span class="pill-sm o-blk">Blocked</span><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>5</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="gallery-group">
+          <div class="gallery-head"><div class="acc-avatar acc-ph" style="width:22px; height:22px; border-radius:5px;">PH</div><span style="font-weight:600">City of Philadelphia</span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-3);">2 meetings</span></div>
+          <div class="gallery-grid">
+            <div class="meet-card">
+              <div class="mc-head"><div class="date-tile past" style="width:36px;height:36px;"><span class="month">Mar</span><span class="day" style="font-size:13px">14</span></div><div><div class="mc-name">Philly 311 Pilot Kickoff</div><div style="font-size:10px; color: var(--ink-4);">6w ago · 6 attendees</div></div></div>
+              <div class="mc-summary">Kickoff with 311 ops + Copilot Studio team. Pilot scope: Spanish-language agent for top 20 request types.</div>
+              <div class="mc-foot"><span class="type-pill t-sync">Sync</span><span class="pill-sm o-dec">Decisions</span><span class="c-spawned"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>4</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========= TIMELINE VIEW ========= -->
+      <div class="timeline" id="view-timeline">
+        <div class="timeline-head" style="padding-left:2px">
+          <span>Week of Apr 20 — Apr 26, 2026</span>
+          <span style="flex:1"></span>
+          <span style="color: var(--ink-3); text-transform: none; letter-spacing: normal; font-weight: 500;">← previous · next →</span>
+        </div>
+        <div class="timeline-grid">
+          <div class="day-col"><div class="day-head"><span class="dow">Mon</span><span class="dnum">20</span></div></div>
+          <div class="day-col"><div class="day-head"><span class="dow">Tue</span><span class="dnum">21</span></div>
+            <div class="tl-event"><div class="time">10:00 – 11:00</div><div class="name">NY ITS Follow-up</div><div class="sub"><div class="avatar-xs me" style="width:14px;height:14px;font-size:7px;">ME</div><span>+ 3 others</span></div></div>
+          </div>
+          <div class="day-col"><div class="day-head"><span class="dow">Wed</span><span class="dnum">22</span></div>
+            <div class="tl-event"><div class="time">09:30 – 10:30</div><div class="name">Code Apps Tech Series Demo</div><div class="sub"><span>Public · 14 RSVPs</span></div></div>
+            <div class="tl-event"><div class="time">14:00 – 14:45</div><div class="name">SLG Team Weekly Sync</div><div class="sub"><div class="avatar-xs me" style="width:14px;height:14px;font-size:7px;">ME</div><span>+ 5 others</span></div></div>
+          </div>
+          <div class="day-col today">
+            <div class="day-head"><span class="dow">Thu</span><span class="dnum">23</span></div>
+            <div class="tl-event"><div class="time">11:00 – 12:00</div><div class="name">PA Eligibility PoC Demo</div><div class="sub"><div class="avatar-xs me" style="width:14px;height:14px;font-size:7px;">ME</div><span>+ 4 others</span></div></div>
+            <div class="tl-event"><div class="time">15:30 – 16:00</div><div class="name">Chicago Smart City follow-up</div><div class="sub"><div class="avatar-xs me" style="width:14px;height:14px;font-size:7px;">ME</div><span>+ 2 others</span></div></div>
+          </div>
+          <div class="day-col"><div class="day-head"><span class="dow">Fri</span><span class="dnum">24</span></div>
+            <div class="tl-event"><div class="time">09:00 – 09:30</div><div class="name">Philly 311 Weekly</div><div class="sub"><span>Recurring</span></div></div>
+          </div>
+          <div class="day-col"><div class="day-head"><span class="dow">Sat</span><span class="dnum">25</span></div></div>
+          <div class="day-col"><div class="day-head"><span class="dow">Sun</span><span class="dnum">26</span></div></div>
+        </div>
+
+        <div class="timeline-head" style="padding-left:2px; margin-top: 22px;">
+          <span>Recent past · Apr 1 — Apr 15</span>
+        </div>
+        <div class="timeline-grid">
+          <div class="day-col"><div class="day-head"><span class="dow">Wed</span><span class="dnum">01</span></div>
+            <div class="tl-event past"><div class="time">10:00</div><div class="name">LA County Emergency Mgmt</div></div>
+          </div>
+          <div class="day-col"><div class="day-head"><span class="dow">Mon</span><span class="dnum">07</span></div>
+            <div class="tl-event past"><div class="time">14:00</div><div class="name">Chicago Smart City RFI</div></div>
+          </div>
+          <div class="day-col"><div class="day-head"><span class="dow">Wed</span><span class="dnum">09</span></div>
+            <div class="tl-event past"><div class="time">11:30</div><div class="name">PA Eligibility PoC Scope</div></div>
+            <div class="tl-event past"><div class="time">15:00</div><div class="name">Maryland CoE Strategy</div></div>
+          </div>
+          <div class="day-col"><div class="day-head"><span class="dow">Thu</span><span class="dnum">10</span></div>
+            <div class="tl-event past"><div class="time">10:00</div><div class="name">Maricopa Records Portal</div></div>
+          </div>
+          <div class="day-col"><div class="day-head"><span class="dow">Fri</span><span class="dnum">11</span></div>
+            <div class="tl-event past"><div class="time">09:00</div><div class="name">NY ITS Copilot Deep Dive</div></div>
+            <div class="tl-event past"><div class="time">14:00</div><div class="name">SLG Team Weekly Sync</div></div>
+          </div>
+          <div class="day-col"><div class="day-head"><span class="dow">Sat</span><span class="dnum">12</span></div>
+            <div class="tl-event past"><div class="time">—</div><div class="name">Code Apps Tech Series Prep</div></div>
+          </div>
+          <div class="day-col"><div class="day-head"><span class="dow">Sun</span><span class="dnum">13</span></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Bulk bar -->
+<div class="bulk-bar">
+  <span class="count mono">1 selected</span>
+  <div class="sep"></div>
+  <button class="bb-btn spawn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Spawn action items</button>
+  <div class="sep"></div>
+  <button class="bb-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg>Account</button>
+  <button class="bb-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>Tag</button>
+  <button class="bb-btn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+  <div class="sep"></div>
+  <button class="bb-btn danger"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Delete</button>
+  <div class="sep"></div>
+  <button class="bb-btn" title="Clear selection" style="opacity: .7;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+</div>
+
+<script>
+  document.querySelectorAll('.row-item .chk').forEach(chk => {
+    chk.addEventListener('click', e => {
+      e.stopPropagation();
+      chk.classList.toggle('on');
+      chk.closest('tr').classList.toggle('selected');
+    });
+  });
+
+  const segBtns = document.querySelectorAll('#view-seg button');
+  const views = {
+    table: document.getElementById('view-table'),
+    gallery: document.getElementById('view-gallery'),
+    timeline: document.getElementById('view-timeline'),
+  };
+  Object.entries(views).forEach(([k, el]) => { if (k !== 'table') el.style.display = 'none'; });
+  segBtns.forEach(b => b.addEventListener('click', () => {
+    segBtns.forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    const v = b.dataset.view;
+    Object.entries(views).forEach(([k, el]) => {
+      if (k === v) el.style.display = (v === 'table') ? '' : 'block';
+      else el.style.display = 'none';
+    });
+  }));
+</script>
+
+</body>
+</html>

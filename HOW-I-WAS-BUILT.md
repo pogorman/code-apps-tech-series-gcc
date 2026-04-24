@@ -689,3 +689,52 @@ All changes in `src/components/layout/app-layout.tsx`.
 **Files created:** `action-items-toolbar.tsx`, `action-items-table.tsx`, `action-items-bulk-bar.tsx`
 **Files modified:** `action-item-list.tsx`
 **Files unchanged:** `action-item-form-dialog.tsx`, `action-item-detail-dialog.tsx`, `action-item-delete-dialog.tsx`, `labels.ts`, `use-action-items.ts`, `board-tokens.ts`
+
+## Phase 28 — Ideas & Meetings List View Redesign
+
+**Prompt:** Two standalone briefs in `inbox/` — `Claude Code Brief - Ideas.md` + `Ideas.html`, and `Claude Code Brief - Meetings.md` + `Meetings.html` — specifying a full redesign of the `/ideas` and `/meeting-summaries` routes using the `--dash-*` Stripe/Retool design system that Phases 25–27 established.
+
+**Why:** Ideas and Meeting Summaries were the last two entity pages still using the old shadcn Table + Card dual-view layout. They hadn't been touched since the initial Phase builds and felt visibly out-of-step with the Dashboard, Board, and Action Items views. The briefs also introduced categorical UX specific to each page: a capture-first "sketchbook" feel for Ideas (warm yellow accent, floating composer, category-grouped views) versus an institutional "evidence" feel for Meetings (teal accent, date tiles, weekly sparkline, 7-day timeline).
+
+**What happened:**
+
+1. **Token extensions (`src/index.css`)** — Added `--dash-yellow`, `--dash-indigo`, `--dash-teal`, matching `--dash-t-*` tints, `--dash-idea-soft` (warm yellow tint used on idea surfaces) and `--dash-meet-soft` (soft teal tint used on date tiles + timeline events). Light + dark variants both.
+
+2. **Ideas rebuild (`src/components/ideas/`)** — Replaced the list component and added 10 sub-components plus a capture composer and promote dialog:
+   - **`ideas-header.tsx`** — Hero with yellow gradient icon tile + stats (total / this week / high potential) + dynamic CategoryStrip (pills w/ colored dot + live count, click to filter). Suppresses categories with zero items.
+   - **`ideas-toolbar.tsx`** — Capture-row search input + Export (visual-only) + gradient-yellow "New Idea" button.
+   - **`ideas-view-tabs.tsx`** — Saved views: All / Mine / New this week / High potential / Archived. Live count pills.
+   - **`ideas-subtoolbar.tsx`** — Filter pills (category / priority / account) + view-mode segment (Table / Gallery / Kanban) + result count.
+   - **`ideas-table.tsx`** — Category-grouped table with collapsible group headers, category badge + count pill, bulb-icon row tile, hover-reveal actions (Promote / Edit / Delete). Includes reusable `IdeaRow`, custom `Checkbox`, `AccountAvatar` (deterministic color from name hash), and relative-age helper.
+   - **`ideas-gallery.tsx`** — Responsive card grid grouped by category, 300px min-width cards, 10px radius, 2-line name + 2-line description clamps, hover lift + shadow.
+   - **`ideas-kanban.tsx`** — Priority-column kanban (Top / High / Low / Eh / Unset) substituting for the brief's stage-status columns (no stage field in Dataverse). Non-draggable v1; click card to open detail dialog.
+   - **`ideas-quick-add.tsx`** — Sticky inline "+" row at the top of the table view; single input, ↵ to save, pre-binds to the active category filter.
+   - **`ideas-bulk-bar.tsx`** — Framer-motion bottom-centered bar with yellow Promote button, Archive, Delete, clear.
+   - **`capture-composer.tsx`** — Persistent floating composer (bottom-right), defining element of the page. `⌘⇧I` focus hotkey, `⌘↵` to capture, minimizable FAB, draft autosave to `localStorage` every 500ms, category + account chip popovers with click-outside close.
+   - **`promote-dialog.tsx`** — Bulk-promote preview. For each selected idea, creates a new Work action item (status Recognized, priority copied, account carried via `tdvsp_Customer@odata.bind`). Optional "archive idea after promoting" toggle. Uses sequential `mutateAsync` to keep the success/failure count accurate.
+   - **`labels.ts` (rewritten)** — Added `CATEGORY_DOT`, `CATEGORY_TINT`, `CATEGORY_ORDER`, `CATEGORY_SHORT_LABELS`, `IDEA_PRIORITY_PILL`, `HIGH_POTENTIAL_PRIORITIES`, `STATE_ACTIVE`, `STATE_ARCHIVED`.
+
+3. **Meetings rebuild (`src/components/meeting-summaries/`)** — Same structural approach, teal-accented:
+   - **`meetings-header.tsx`** — Hero with teal gradient icon tile + 4-card stats strip: Total / This week / With summary / 8-week cadence sparkline (pure SVG path + gradient fill, ending dot highlighted).
+   - **`meetings-toolbar.tsx`** — Search + Export.
+   - **`meetings-view-tabs.tsx`** — Saved views: All / Mine / This week / Needs summary (no summary text) / Pinned / Archived.
+   - **`meetings-subtoolbar.tsx`** — Account filter pill (teal when active) + view-mode segment (Table / Gallery / Timeline) + count.
+   - **`meetings-table.tsx`** — Grouped by account with collapsible group headers (click group name to filter to just that account). Date tile (42×42, teal for upcoming, muted for past) + pin indicator + first-sentence summary + when-label ("today" in teal). Exports `DateTile` + `AccountAvatar` for reuse.
+   - **`meetings-gallery.tsx`** — Responsive card grid grouped by account; 300px+ cards with date tile top-left, pin/title/relative-when, 3-line summary clamp.
+   - **`meetings-timeline.tsx`** — Monday–Sunday week grid centered on today. Today column outlined in teal with soft halo. Per-event cards: time-of-day + title + account avatar. Off-week meetings render in an overflow list below.
+   - **`meetings-quick-add.tsx`** — Sticky inline row in the table view: title input + today-defaulted date picker, ↵ to save, pre-binds active account filter.
+   - **`meetings-bulk-bar.tsx`** — Framer-motion bar with teal-gradient Spawn action items (requires single selection; routes into the existing `ExtractActionItemsDialog` / Azure OpenAI extraction), smart Pin/Unpin toggle (pins if any unpinned, otherwise unpins), Archive, Delete, clear.
+   - **`labels.ts`** — Pinned detection (`true` OR `1`), `accountAvatarColor`, `formatMonthDay`, `relativeWhen`, `isDatePast`, state constants.
+   - **`⌘⇧M` shortcut** — Opens the new-summary dialog from anywhere.
+
+4. **Hook additions (`src/hooks/`)** — Added `useAllIdeas` and `useAllMeetingSummaries` variants that skip the `statecode eq 0` filter. The orchestrators use these single sources to power both active tabs and the Archived tab from one client-side cache.
+
+5. **Pragmatic v1 schema gaps** — Documented and worked around:
+   - Ideas: no stage field → `Archived` = `statecode=1`, stage collapsed to active/archived only; `Promoted` saved view dropped (no back-link field on action items); kanban substitutes priority for stage.
+   - Meetings: no type / outcome / attendees / keyQuote / duration / tags / transcriptUrl / recordingUrl / spawnedActionItemIds / relatedIdeaIds fields → those columns + views are omitted; "Needs summary" substitutes for "Has open follow-ups"; type/outcome pills omitted.
+   - "Mine" tabs on both pages are placeholders (no current-user id plumbed through yet) — they currently mirror "All."
+
+**Files created (Ideas):** `ideas-header.tsx`, `ideas-toolbar.tsx`, `ideas-view-tabs.tsx`, `ideas-subtoolbar.tsx`, `ideas-table.tsx`, `ideas-gallery.tsx`, `ideas-kanban.tsx`, `ideas-quick-add.tsx`, `ideas-bulk-bar.tsx`, `capture-composer.tsx`, `promote-dialog.tsx`
+**Files created (Meetings):** `meetings-header.tsx`, `meetings-toolbar.tsx`, `meetings-view-tabs.tsx`, `meetings-subtoolbar.tsx`, `meetings-table.tsx`, `meetings-gallery.tsx`, `meetings-timeline.tsx`, `meetings-quick-add.tsx`, `meetings-bulk-bar.tsx`, `labels.ts` (new file in meeting-summaries)
+**Files modified:** `src/components/ideas/idea-list.tsx` (rewrite as orchestrator), `src/components/ideas/labels.ts` (major expansion), `src/components/meeting-summaries/meeting-summary-list.tsx` (rewrite as orchestrator), `src/hooks/use-ideas.ts` (added `useAllIdeas`), `src/hooks/use-meeting-summaries.ts` (added `useAllMeetingSummaries`), `src/index.css` (added teal + yellow + indigo tokens, light + dark)
+**Files unchanged:** The per-entity form / detail / delete dialogs were kept as-is; they work fine and rebuilding them wasn't required for the brief's layout.

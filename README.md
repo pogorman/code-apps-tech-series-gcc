@@ -64,9 +64,9 @@ src/
     ui/               # shadcn/ui primitives
     accounts/         # Account CRUD components
     contacts/         # Contact CRUD components
-    action-items/     # Action Item CRUD components
-    meeting-summaries/# Meeting Summary CRUD components
-    ideas/            # Idea CRUD components
+    action-items/     # Action Item CRUD components (Phase 27: dash design system, table-only)
+    meeting-summaries/# Meeting Summary components (Phase 28: dash, teal accent, 3 view modes, sparkline, timeline)
+    ideas/            # Idea components (Phase 28: dash, yellow accent, CategoryStrip, capture composer, promote flow)
     projects/         # Project CRUD components
     dashboard/        # Analytics dashboard (Stripe/Retool design: decomposed into 8 sub-components — page-header, focus-strip, kpi-card, status-breakdown, priority-distribution, task-types, items-by-account, dashboard-tokens; pure SVG/CSS charts, Inter font, --dash-* CSS vars for light/dark) + Kanban board view (glassmorphism columns + cards, Framer Motion entrance with capped stagger, 4-column drag-and-drop, clickable cards, custom collision detection, accent-glow drop highlights)
     layout/           # App shell (collapsible left sidebar with colored nav icons + quick create bar with task-type presets + dark mode toggle)
@@ -200,3 +200,32 @@ The action items list (Phase 27) uses the `--dash-*` Stripe/Retool design system
 - **Group by Account:** Collapsible group headers with 2-letter colored avatar, count pill, mini status distribution bar, "N open · M overdue" text
 - **Bulk actions:** Row selection with floating bottom bar (Framer Motion animated): Mark complete (fires confetti), Delete, clear
 - **Density:** Compact mode hides description meta-line and shrinks row height
+
+## Ideas List View
+
+The ideas list (Phase 28) uses the `--dash-*` design system with a warm yellow accent — "sketchbook" feel, capture-first.
+
+- **Header:** Yellow-gradient icon tile + hero + three stats (Total / This week / High potential) + dynamic CategoryStrip (pills with colored dot + live count; click to filter; zero-count categories hidden)
+- **Toolbar:** Search + Export + gradient-yellow "New Idea" primary button
+- **Saved-view tabs:** All / Mine / New this week / High potential / Archived — live counts computed client-side
+- **Subtoolbar:** Active filter pills (category / priority / account) with clear-× + view-mode segment (Table / Gallery / Kanban) + result count
+- **Table:** Category-grouped collapsible sections with category badge, count pill, bulb row tile, hover-reveal Promote / Edit / Delete. Includes a sticky inline Quick-Add row (single input, ↵ saves)
+- **Gallery:** Category-grouped responsive card grid (300px+) with bulb + 2-line name clamp + 2-line description clamp + priority pill + relative age
+- **Kanban:** Columns by priority — Top Priority / High / Low / Eh / Unset (substitutes for the brief's stage status since `tdvsp_Idea` has no stage field). Click a card to open the detail dialog
+- **Capture Composer (signature element):** Persistent floating composer in the bottom-right corner. `⌘⇧I` focuses, `⌘↵` captures, drafts autosave to localStorage every 500ms, category + account chip popovers, minimizable to a FAB
+- **Promote flow:** Bulk bar → yellow Promote button opens a preview dialog. Each selected idea becomes a new Work action item (status Recognized, priority copied, account carried via `tdvsp_Customer@odata.bind`), optionally archiving the originating idea
+- **Archived:** Modeled as `statecode=1`. `useAllIdeas` hook powers both the Active tabs and the Archived tab from a single query
+
+## Meetings List View
+
+The meetings list (Phase 28) uses the `--dash-*` design system with a teal accent — institutional feel, distinct from Ideas' sketchbook.
+
+- **Header:** Teal-gradient icon tile + hero + 4-card stats strip: Total summaries / This week / With summary / 8-week cadence (pure-SVG sparkline with gradient fill + highlighted end dot). Upload transcript + "New Summary" gradient-teal primary button
+- **Toolbar:** Search with `/` kbd hint + Export
+- **Saved-view tabs:** All / Mine / This week / Needs summary (no summary text) / Pinned / Archived — live counts
+- **Subtoolbar:** Account filter pill (teal when active, clear-×) + view-mode segment (Table / Gallery / Timeline) + result count
+- **Table:** Grouped by account with collapsible group headers. 42×42 date tile (teal for future, muted for past) + pin indicator + first-sentence summary + when-label (relative, "today" highlighted in teal). Sticky inline Quick-Add row with title input + today-defaulted date picker
+- **Gallery:** Account-grouped responsive card grid (300px+) with date tile top-left + pin/title/relative-when + 3-line summary clamp
+- **Timeline:** Monday–Sunday week grid centered on today. Today column outlined in teal with soft halo. Per-event cards show time-of-day + title + account avatar. Off-week meetings appear in an overflow list below
+- **Bulk actions:** Teal-gradient Spawn action items (requires single selection; routes into the existing `ExtractActionItemsDialog` / Azure OpenAI extraction), smart Pin/Unpin toggle (pins if any unpinned, otherwise unpins all), Archive, Delete
+- **Keyboard:** `⌘⇧M` opens the new-summary dialog from anywhere

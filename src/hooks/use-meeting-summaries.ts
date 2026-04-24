@@ -21,6 +21,20 @@ export function useMeetingSummaries(options?: { filter?: string; orderBy?: strin
   });
 }
 
+/** Returns every meeting summary regardless of statecode. Powers both the
+ *  Active tabs and the Archived tab from a single client-side source. */
+export function useAllMeetingSummaries(options?: { orderBy?: string[] }) {
+  return useQuery({
+    queryKey: [...MEETING_SUMMARIES_KEY, "all", options],
+    queryFn: async () => {
+      const result = await Tdvsp_meetingsummariesService.getAll({
+        orderBy: options?.orderBy ?? ["tdvsp_date desc"],
+      });
+      return result.data ?? [];
+    },
+  });
+}
+
 export function useMeetingSummary(id: string | undefined) {
   return useQuery({
     queryKey: [...MEETING_SUMMARIES_KEY, id],

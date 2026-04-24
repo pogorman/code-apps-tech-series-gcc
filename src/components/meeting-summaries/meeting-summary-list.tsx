@@ -1,37 +1,52 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMeetingSummaries, useDeleteMeetingSummary } from "@/hooks/use-meeting-summaries";
-import { useAccounts } from "@/hooks/use-accounts";
+import type { Tdvsp_meetingsummariesModel } from "@/generated";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+  useAllMeetingSummaries,
+  useDeleteMeetingSummary,
+  useUpdateMeetingSummary,
+} from "@/hooks/use-meeting-summaries";
+import { useAccounts } from "@/hooks/use-accounts";
+import { useQuickCreateStore } from "@/stores/quick-create-store";
+import { toast } from "sonner";
+
 import { MeetingSummaryFormDialog } from "./meeting-summary-form-dialog";
 import { MeetingSummaryDetailDialog } from "./meeting-summary-detail-dialog";
 import { MeetingSummaryDeleteDialog } from "./meeting-summary-delete-dialog";
-import { FileText, Pencil, Plus, Search, Trash2 } from "lucide-react";
-import type { Tdvsp_meetingsummariesModel } from "@/generated";
-import { toast } from "sonner";
-import { useQuickCreateStore } from "@/stores/quick-create-store";
-import { useViewPreference } from "@/hooks/use-view-preference";
-import { ViewToggle } from "@/components/ui/view-toggle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExtractActionItemsDialog } from "./extract-action-items-dialog";
+import { MeetingsHeader } from "./meetings-header";
+import { MeetingsToolbar } from "./meetings-toolbar";
+import { MeetingsViewTabs, type MeetingSavedView } from "./meetings-view-tabs";
+import { MeetingsSubtoolbar, type MeetingViewMode } from "./meetings-subtoolbar";
+import { MeetingsTable, type MeetingGroup } from "./meetings-table";
+import { MeetingsGallery } from "./meetings-gallery";
+import { MeetingsTimeline } from "./meetings-timeline";
+import { MeetingsQuickAdd } from "./meetings-quick-add";
+import { MeetingsBulkBar } from "./meetings-bulk-bar";
+import { STATE_ACTIVE, STATE_ARCHIVED, isPinned } from "./labels";
 
 type MeetingSummary = Tdvsp_meetingsummariesModel.Tdvsp_meetingsummaries;
 
+const VIEW_MODE_KEY = "meetings.view-mode";
+
+function getViewMode(): MeetingViewMode {
+  try {
+    const v = localStorage.getItem(VIEW_MODE_KEY);
+    if (v === "table" || v === "gallery" || v === "timeline") return v;
+  } catch { /* noop */ }
+  return "table";
+}
+
 export function MeetingSummaryList() {
+  /* ── External open-from-quick-create signal ─────────────────── */
   const quickTarget = useQuickCreateStore((s) => s.target);
   const clearQuickCreate = useQuickCreateStore((s) => s.clear);
 
-  const [viewMode, setViewMode] = useViewPreference("meeting-summaries");
-  const [search, setSearch] = useState("");
+  /* ── Dialog state ───────────────────────────────────────────── */
   const [createOpen, setCreateOpen] = useState(false);
+  const [editItem, setEditItem] = useState<MeetingSummary | null>(null);
+  const [viewItem, setViewItem] = useState<MeetingSummary | null>(null);
+  const [deleteItem, setDeleteItem] = useState<MeetingSummary | null>(null);
+  const [spawnItem, setSpawnItem] = useState<MeetingSummary | null>(null);
 
   useEffect(() => {
     if (quickTarget === "meeting-summaries") {
@@ -39,16 +54,35 @@ export function MeetingSummaryList() {
       clearQuickCreate();
     }
   }, [quickTarget, clearQuickCreate]);
-  const [editItem, setEditItem] = useState<MeetingSummary | null>(null);
-  const [viewItem, setViewItem] = useState<MeetingSummary | null>(null);
-  const [deleteItem, setDeleteItem] = useState<MeetingSummary | null>(null);
 
-  const filter = search
-    ? `contains(tdvsp_name, '${search.replace(/'/g, "''")}')`
-    : undefined;
+  /* ── Keyboard: ⌘⇧M opens new-summary dialog ─────────────────── */
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      const isMod = e.metaKey || e.ctrlKey;
+      if (isMod && e.shiftKey && e.key.toLowerCase() === "m") {
+        e.preventDefault();
+        setCreateOpen(true);
+      }
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
-  const { data: items, isLoading, error } = useMeetingSummaries({ filter });
+  /* ── Filter / view state ────────────────────────────────────── */
+  const [search, setSearch] = useState("");
+  const [activeView, setActiveView] = useState<MeetingSavedView>("all");
+  const [accountFilter, setAccountFilter] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<MeetingViewMode>(getViewMode);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    try { localStorage.setItem(VIEW_MODE_KEY, viewMode); } catch { /* noop */ }
+  }, [viewMode]);
+
+  /* ── Data ───────────────────────────────────────────────────── */
+  const { data: allItems, error } = useAllMeetingSummaries();
   const { data: accounts } = useAccounts();
+  const updateMutation = useUpdateMeetingSummary();
   const deleteMutation = useDeleteMeetingSummary();
 
   const accountNameMap = useMemo(() => {
@@ -57,6 +91,136 @@ export function MeetingSummaryList() {
     return map;
   }, [accounts]);
 
+  /* ── Active items (drives stats in the hero) ────────────────── */
+  const activeItems = useMemo(
+    () => (allItems ?? []).filter((it) => ((it as unknown as Record<string, number>).statecode ?? 0) === STATE_ACTIVE),
+    [allItems],
+  );
+
+  /* ── View counts ────────────────────────────────────────────── */
+  const viewCounts = useMemo<Record<MeetingSavedView, number>>(() => {
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    let all = 0, mine = 0, thisWeek = 0, needsSummary = 0, pinned = 0, archived = 0;
+    for (const it of allItems ?? []) {
+      const state = (it as unknown as Record<string, number>).statecode ?? 0;
+      if (state === STATE_ARCHIVED) { archived++; continue; }
+      all++;
+      mine++; // placeholder until current-user is plumbed
+      if (it.tdvsp_date && new Date(it.tdvsp_date).getTime() >= weekAgo) thisWeek++;
+      if (!it.tdvsp_summary?.trim()) needsSummary++;
+      if (isPinned(it)) pinned++;
+    }
+    return { all, mine, "this-week": thisWeek, "needs-summary": needsSummary, pinned, archived };
+  }, [allItems]);
+
+  /* ── Filtered list ──────────────────────────────────────────── */
+  const filtered = useMemo(() => {
+    if (!allItems) return [] as MeetingSummary[];
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const searchLower = search.trim().toLowerCase();
+
+    return allItems.filter((it) => {
+      const state = (it as unknown as Record<string, number>).statecode ?? 0;
+      const isArchived = state === STATE_ARCHIVED;
+
+      switch (activeView) {
+        case "archived":
+          if (!isArchived) return false;
+          break;
+        case "this-week": {
+          if (isArchived) return false;
+          if (!it.tdvsp_date || new Date(it.tdvsp_date).getTime() < weekAgo) return false;
+          break;
+        }
+        case "needs-summary":
+          if (isArchived) return false;
+          if (it.tdvsp_summary?.trim()) return false;
+          break;
+        case "pinned":
+          if (isArchived) return false;
+          if (!isPinned(it)) return false;
+          break;
+        case "mine":
+        case "all":
+        default:
+          if (isArchived) return false;
+          break;
+      }
+
+      if (accountFilter !== null) {
+        const a = (it as unknown as Record<string, string>)._tdvsp_account_value;
+        if (a !== accountFilter) return false;
+      }
+
+      if (searchLower) {
+        const name = (it.tdvsp_name ?? "").toLowerCase();
+        const summary = (it.tdvsp_summary ?? "").toLowerCase();
+        if (!name.includes(searchLower) && !summary.includes(searchLower)) return false;
+      }
+
+      return true;
+    });
+  }, [allItems, activeView, accountFilter, search]);
+
+  /* ── Group by account, sorted by date desc inside each group ── */
+  const groups: MeetingGroup[] = useMemo(() => {
+    const buckets = new Map<string, MeetingSummary[]>();
+    const accountNameForId = new Map<string, string>();
+
+    for (const it of filtered) {
+      const aid = (it as unknown as Record<string, string>)._tdvsp_account_value ?? "";
+      const key = aid || "__none__";
+      const list = buckets.get(key) ?? [];
+      list.push(it);
+      buckets.set(key, list);
+      if (aid && !accountNameForId.has(aid)) {
+        accountNameForId.set(aid, it.tdvsp_accountname ?? accountNameMap.get(aid) ?? "Unknown account");
+      }
+    }
+
+    for (const list of buckets.values()) {
+      list.sort((a, b) => (b.tdvsp_date ?? "").localeCompare(a.tdvsp_date ?? ""));
+    }
+
+    // Ordered: accounts with most meetings first, "No account" bucket last
+    const ordered = [...buckets.entries()]
+      .sort((a, b) => {
+        if (a[0] === "__none__") return 1;
+        if (b[0] === "__none__") return -1;
+        return b[1].length - a[1].length;
+      })
+      .map(([key, items]): MeetingGroup => ({
+        accountId: key === "__none__" ? null : key,
+        accountName: key === "__none__" ? "No account" : (accountNameForId.get(key) ?? "Unknown account"),
+        items,
+      }));
+
+    return ordered;
+  }, [filtered, accountNameMap]);
+
+  /* ── Selection ──────────────────────────────────────────────── */
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function toggleSelectAll() {
+    setSelectedIds((prev) => {
+      if (prev.size === filtered.length && filtered.length > 0) return new Set();
+      return new Set(filtered.map((it) => it.tdvsp_meetingsummaryid));
+    });
+  }
+  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length;
+  const selectedItems = useMemo(
+    () => filtered.filter((it) => selectedIds.has(it.tdvsp_meetingsummaryid)),
+    [filtered, selectedIds],
+  );
+  const allSelectedPinned = selectedItems.length > 0 && selectedItems.every(isPinned);
+
+  /* ── Actions ────────────────────────────────────────────────── */
   function handleDelete() {
     if (!deleteItem) return;
     deleteMutation.mutate(deleteItem.tdvsp_meetingsummaryid, {
@@ -64,10 +228,74 @@ export function MeetingSummaryList() {
         toast.success(`Deleted "${deleteItem.tdvsp_name}"`);
         setDeleteItem(null);
       },
-      onError: (err) => {
-        toast.error(`Delete failed: ${err.message}`);
-      },
+      onError: (err) => toast.error(`Delete failed: ${err.message}`),
     });
+  }
+
+  async function handleBulkArchive() {
+    if (selectedItems.length === 0) return;
+    let successes = 0, failures = 0;
+    for (const it of selectedItems) {
+      try {
+        await updateMutation.mutateAsync({
+          id: it.tdvsp_meetingsummaryid,
+          fields: { statecode: STATE_ARCHIVED } as never,
+        });
+        successes++;
+      } catch {
+        failures++;
+      }
+    }
+    if (successes) toast.success(`Archived ${successes}`);
+    if (failures) toast.error(`${failures} failed to archive`);
+    setSelectedIds(new Set());
+  }
+
+  async function handleBulkDelete() {
+    if (selectedItems.length === 0) return;
+    if (!window.confirm(`Delete ${selectedItems.length} meeting${selectedItems.length === 1 ? "" : "s"}? This cannot be undone.`)) {
+      return;
+    }
+    let successes = 0, failures = 0;
+    for (const it of selectedItems) {
+      try {
+        await deleteMutation.mutateAsync(it.tdvsp_meetingsummaryid);
+        successes++;
+      } catch {
+        failures++;
+      }
+    }
+    if (successes) toast.success(`Deleted ${successes}`);
+    if (failures) toast.error(`${failures} failed to delete`);
+    setSelectedIds(new Set());
+  }
+
+  async function handleBulkTogglePin() {
+    if (selectedItems.length === 0) return;
+    const target = !allSelectedPinned; // if all pinned → unpin all; else pin all
+    let successes = 0, failures = 0;
+    for (const it of selectedItems) {
+      try {
+        await updateMutation.mutateAsync({
+          id: it.tdvsp_meetingsummaryid,
+          fields: { tdvsp_pinned: target } as never,
+        });
+        successes++;
+      } catch {
+        failures++;
+      }
+    }
+    if (successes) toast.success(`${target ? "Pinned" : "Unpinned"} ${successes}`);
+    if (failures) toast.error(`${failures} failed`);
+    setSelectedIds(new Set());
+  }
+
+  function handleBulkSpawn() {
+    if (selectedItems.length !== 1) {
+      toast.error("Pick a single meeting to spawn action items from");
+      return;
+    }
+    setSpawnItem(selectedItems[0]!);
   }
 
   if (error) {
@@ -78,185 +306,95 @@ export function MeetingSummaryList() {
     );
   }
 
+  const totalForSubtoolbar = activeView === "archived" ? viewCounts.archived : viewCounts.all;
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-          <FileText className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Meeting Summaries</h1>
-          <p className="text-sm text-muted-foreground">Capture key meeting outcomes and notes</p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative max-w-sm flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search meeting summaries..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <ViewToggle mode={viewMode} onChange={setViewMode} />
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Summary
-          </Button>
-        </div>
-      </div>
-
-      {viewMode === "table" ? (
-        <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Account</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 4 }).map((_, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : items?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                    {search ? "No meeting summaries match your search." : "No meeting summaries found. Create one to get started."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                items?.map((item) => {
-                  const accountId = (item as unknown as Record<string, string>)._tdvsp_account_value;
-                  const accountName = item.tdvsp_accountname ?? accountNameMap.get(accountId ?? "") ?? "\u2014";
-                  return (
-                    <TableRow
-                      key={item.tdvsp_meetingsummaryid}
-                      className="cursor-pointer"
-                      onClick={() => setViewItem(item)}
-                    >
-                      <TableCell className="font-medium">{item.tdvsp_name}</TableCell>
-                      <TableCell>{accountName}</TableCell>
-                      <TableCell>
-                        {item.tdvsp_date
-                          ? new Date(item.tdvsp_date).toLocaleDateString()
-                          : "\u2014"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setEditItem(item)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setDeleteItem(item)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      ) : isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader><Skeleton className="h-5 w-3/4" /></CardHeader>
-              <CardContent className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : items?.length === 0 ? (
-        <div className="text-center text-muted-foreground py-8">
-          {search ? "No meeting summaries match your search." : "No meeting summaries found. Create one to get started."}
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items?.map((item) => {
-            const accountId = (item as unknown as Record<string, string>)._tdvsp_account_value;
-            const accountName = item.tdvsp_accountname ?? accountNameMap.get(accountId ?? "") ?? "\u2014";
-            return (
-              <Card
-                key={item.tdvsp_meetingsummaryid}
-                className="cursor-pointer transition-shadow hover:shadow-md"
-                onClick={() => setViewItem(item)}
-              >
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                  <CardTitle className="text-base font-semibold">{item.tdvsp_name}</CardTitle>
-                  <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditItem(item)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteItem(item)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-1 text-sm text-muted-foreground">
-                  <div>
-                    <span className="font-medium text-foreground">Account: </span>
-                    {accountName}
-                  </div>
-                  <div>
-                    <span className="font-medium text-foreground">Date: </span>
-                    {item.tdvsp_date ? new Date(item.tdvsp_date).toLocaleDateString() : "\u2014"}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      <MeetingSummaryFormDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        mode="create"
+    <div
+      style={{
+        margin: -16, // cancel AppLayout padding for edge-to-edge
+        background: "var(--dash-bg)",
+        minHeight: "calc(100vh - 88px)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <MeetingsHeader
+        items={activeItems}
+        onNew={() => setCreateOpen(true)}
+        onUploadTranscript={() => {
+          toast.info("Upload transcript coming soon — for now, paste it into the summary field when creating a meeting.");
+        }}
       />
 
+      <MeetingsToolbar search={search} onSearchChange={setSearch} />
+
+      <MeetingsViewTabs active={activeView} onChange={setActiveView} counts={viewCounts} />
+
+      <MeetingsSubtoolbar
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        accountFilter={accountFilter}
+        accountName={accountFilter ? accountNameMap.get(accountFilter) : undefined}
+        onAccountClear={() => setAccountFilter(null)}
+        resultCount={filtered.length}
+        totalCount={totalForSubtoolbar}
+      />
+
+      <div style={{ flex: 1, overflow: "auto", minHeight: 0 }}>
+        {viewMode === "table" && (
+          <MeetingsTable
+            groups={groups}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+            onToggleSelectAll={toggleSelectAll}
+            allSelected={allSelected}
+            onView={setViewItem}
+            onEdit={setEditItem}
+            onDelete={setDeleteItem}
+            onSpawn={setSpawnItem}
+            onAccountFilter={setAccountFilter}
+            quickAdd={<MeetingsQuickAdd defaultAccountId={accountFilter} />}
+          />
+        )}
+        {viewMode === "gallery" && (
+          <MeetingsGallery
+            groups={groups}
+            onView={setViewItem}
+            onEdit={setEditItem}
+            onDelete={setDeleteItem}
+            onSpawn={setSpawnItem}
+            onAccountFilter={setAccountFilter}
+          />
+        )}
+        {viewMode === "timeline" && (
+          <MeetingsTimeline items={filtered} onView={setViewItem} />
+        )}
+      </div>
+
+      <MeetingsBulkBar
+        count={selectedIds.size}
+        allPinned={allSelectedPinned}
+        onSpawn={handleBulkSpawn}
+        onTogglePin={handleBulkTogglePin}
+        onArchive={handleBulkArchive}
+        onDelete={handleBulkDelete}
+        onClear={() => setSelectedIds(new Set())}
+      />
+
+      {/* Dialogs */}
+      <MeetingSummaryFormDialog open={createOpen} onOpenChange={setCreateOpen} mode="create" />
       <MeetingSummaryFormDialog
         open={!!editItem}
         onOpenChange={(open) => { if (!open) setEditItem(null); }}
         mode="edit"
         meetingSummary={editItem ?? undefined}
       />
-
       <MeetingSummaryDetailDialog
         open={!!viewItem}
         onOpenChange={(open) => { if (!open) setViewItem(null); }}
         meetingSummary={viewItem ?? undefined}
-        onEdit={(item) => {
-          setViewItem(null);
-          setEditItem(item);
-        }}
+        onEdit={(item) => { setViewItem(null); setEditItem(item); }}
       />
-
       <MeetingSummaryDeleteDialog
         open={!!deleteItem}
         onOpenChange={(open) => { if (!open) setDeleteItem(null); }}
@@ -264,6 +402,13 @@ export function MeetingSummaryList() {
         onConfirm={handleDelete}
         isDeleting={deleteMutation.isPending}
       />
+      {spawnItem && (
+        <ExtractActionItemsDialog
+          open={!!spawnItem}
+          onOpenChange={(open) => { if (!open) setSpawnItem(null); }}
+          meetingSummary={spawnItem}
+        />
+      )}
     </div>
   );
 }

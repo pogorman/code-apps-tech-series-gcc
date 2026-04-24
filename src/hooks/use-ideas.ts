@@ -21,6 +21,20 @@ export function useIdeas(options?: { filter?: string; orderBy?: string[] }) {
   });
 }
 
+/** Returns every idea regardless of statecode. Used by the Ideas page to power
+ *  both the Active tabs and the Archived tab from a single client-side source. */
+export function useAllIdeas(options?: { orderBy?: string[] }) {
+  return useQuery({
+    queryKey: [...IDEAS_KEY, "all", options],
+    queryFn: async () => {
+      const result = await Tdvsp_ideasService.getAll({
+        orderBy: options?.orderBy ?? ["createdon desc"],
+      });
+      return result.data ?? [];
+    },
+  });
+}
+
 export function useIdea(id: string | undefined) {
   return useQuery({
     queryKey: [...IDEAS_KEY, id],
