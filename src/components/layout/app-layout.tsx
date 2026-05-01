@@ -46,7 +46,7 @@ const NAV_SECTIONS: NavSection[] = [
     label: "insights",
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/board", label: "My Board", icon: Columns3 },
+      { to: "/board", label: "My Task Board", icon: Columns3 },
     ],
   },
   {
