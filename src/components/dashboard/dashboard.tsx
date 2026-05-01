@@ -21,7 +21,6 @@ import {
   ACCOUNT_PALETTE,
 } from "./dashboard-tokens";
 import { PageHeader } from "./page-header";
-import { FocusStrip } from "./focus-strip";
 import { KpiGrid } from "./kpi-card";
 import { StatusBreakdown } from "./status-breakdown";
 import { PriorityDistribution } from "./priority-distribution";
@@ -279,12 +278,6 @@ export function Dashboard() {
     <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, letterSpacing: "-0.005em" }}>
       <PageHeader />
 
-      <FocusStrip
-        items={allItems}
-        onItemClick={(item) =>
-          openDrilldown("Focus Item", [item])
-        }
-      />
 
       <KpiGrid
         stats={stats}
