@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, X, Send, Loader2 } from "lucide-react";
+import { Compass, X, Send, Loader2 } from "lucide-react";
 import { MicrosoftCopilotStudioService } from "@/generated";
 import { cn } from "@/lib/utils";
 
@@ -132,9 +132,9 @@ export function CopilotChatPanel() {
           "fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-110",
           "bg-gradient-to-br from-[#8B5CF6] to-[#EC4899] text-white"
         )}
-        title="Open Connected Agent"
+        title="Open Compass"
       >
-        <Sparkles className="h-5 w-5" />
+        <Compass className="h-5 w-5" />
       </button>
 
       {isOpen && (
@@ -153,12 +153,12 @@ export function CopilotChatPanel() {
           >
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#8B5CF6] to-[#EC4899] text-white">
-                <Sparkles className="h-4 w-4" />
+                <Compass className="h-4 w-4" />
               </div>
               <div>
-                <div className="text-sm font-semibold">Connected Agent</div>
+                <div className="text-sm font-semibold">Compass</div>
                 <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-                  GCC &middot; Entra ID authenticated
+                  Assisting you in navigating My Work
                 </div>
               </div>
             </div>
@@ -189,7 +189,7 @@ export function CopilotChatPanel() {
             {messages.length === 0 && !isSending && (
               <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#8B5CF6]/20 to-[#EC4899]/20">
-                  <Sparkles className="h-6 w-6 text-[#8B5CF6]" />
+                  <Compass className="h-6 w-6 text-[#8B5CF6]" />
                 </div>
                 <div className="text-sm font-medium">Ask me anything</div>
                 <div className="max-w-[260px] text-xs text-muted-foreground">

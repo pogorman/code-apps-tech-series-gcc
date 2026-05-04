@@ -123,7 +123,7 @@ This repo was cloned from `code-apps-tech-series` (commercial) with the followin
 |------|-----------|-----|
 | Environment | og-dv (`crm.dynamics.com`) | og-code (`crm9.dynamics.com`) |
 | Region config | `"region": "prod"` or omitted | `"region": "gccmoderate"` |
-| Copilot chat | `copilot-chat.tsx` with popup agent | Removed (no GCC agent configured) |
+| Copilot chat | `copilot-chat.tsx` with popup agent | `copilot-chat-panel.tsx` — embedded in-app chat (**Compass**), uses `shared_microsoftcopilotstudio` connector → `cr7d7_agent`. Cross-cloud cert bug that blocked GCC was fixed by Microsoft (May 2026) |
 | Azure OpenAI | Commercial endpoints | Same commercial endpoints (GCC Power Platform uses commercial Azure) |
 
 ### GCC Region Values (`power.config.json`)

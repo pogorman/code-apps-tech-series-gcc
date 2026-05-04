@@ -738,3 +738,21 @@ All changes in `src/components/layout/app-layout.tsx`.
 **Files created (Meetings):** `meetings-header.tsx`, `meetings-toolbar.tsx`, `meetings-view-tabs.tsx`, `meetings-subtoolbar.tsx`, `meetings-table.tsx`, `meetings-gallery.tsx`, `meetings-timeline.tsx`, `meetings-quick-add.tsx`, `meetings-bulk-bar.tsx`, `labels.ts` (new file in meeting-summaries)
 **Files modified:** `src/components/ideas/idea-list.tsx` (rewrite as orchestrator), `src/components/ideas/labels.ts` (major expansion), `src/components/meeting-summaries/meeting-summary-list.tsx` (rewrite as orchestrator), `src/hooks/use-ideas.ts` (added `useAllIdeas`), `src/hooks/use-meeting-summaries.ts` (added `useAllMeetingSummaries`), `src/index.css` (added teal + yellow + indigo tokens, light + dark)
 **Files unchanged:** The per-entity form / detail / delete dialogs were kept as-is; they work fine and rebuilding them wasn't required for the brief's layout.
+
+## Phase 29 — Agent Rebrand: Connected Agent → Compass
+
+**Prompt:** "the agent current says connected agent and has circle logo next to it. can we update that if i give you some specifics? […] agent name - Compass and i'd love to see an icon that looks like a directional compass. […] subtitle should be Assisting you in navigating My Work."
+
+**Why:** Once the GCC `shared_microsoftcopilotstudio` connector started working in May 2026 (Microsoft fixed the cross-cloud certificate bug behind `AADSTS7000301`), the embedded chat panel was finally usable in the demo — but it was still labeled "Connected Agent" with a generic Sparkles icon, which was a working title from the connector-debugging era. With the agent now load-bearing for the demo, it needed a real identity that ties to the app's purpose ("My Work").
+
+**What happened:**
+
+1. **`src/components/copilot-chat-panel.tsx`** — Swapped the Lucide `Sparkles` import for `Compass`. Updated all four icon sites: floating launcher button (`h-12 w-12` purple→pink gradient), header avatar (`h-8 w-8` gradient circle), empty-state hero (`h-14 w-14` faded gradient), and button `title` attribute. Header title changed `Connected Agent` → `Compass`. Header subtitle changed `GCC · Entra ID authenticated` → `Assisting you in navigating My Work`. Conversation logic, connector wiring (`cr7d7_agent` via `MicrosoftCopilotStudioService.ExecuteCopilotAsyncV2`), Reset behavior, and the gradient color tokens (`#8B5CF6` → `#EC4899`) were left unchanged — this was a name + icon swap only, no functional changes.
+
+2. **Doc sync** — Updated `README.md` (commercial-vs-GCC matrix row that still claimed the agent was "Removed (no GCC agent configured)" — out of date since May 2026), `ARCHITECTURE.md` (component description rewritten for `copilot-chat-panel.tsx` — the commercial repo's popup-only `copilot-chat.tsx` was never ported), and `USER-GUIDE.md` ("Copilot Studio Agent" section rewritten as "Compass — In-App Agent" with the new visual cues and reset/close behavior).
+
+3. **Build + push:** `npm run build` (~26s, 939KB JS / 274KB gzip — the chunk-size warning is the same one that's been there since Phase 24's recharts addition), then `pac code push` to og-code (`pac org who` confirmed target first).
+
+**Key choice:** Used the Lucide `Compass` icon instead of the `inbox/compass.png` image the user offered as a fallback. Lucide's `Compass` is a proper directional-compass line glyph that matches the rest of the app's icon set (Sparkles, Send, Loader2, MessageCircle elsewhere — all Lucide), respects light/dark theme via `currentColor`, and scales without rasterization at any size. The PNG had its own visual identity that would have clashed with the gradient header.
+
+**Files changed:** `src/components/copilot-chat-panel.tsx`, `README.md`, `ARCHITECTURE.md`, `USER-GUIDE.md`, `HOW-I-WAS-BUILT.md`.

@@ -280,15 +280,16 @@ This overwrites `code-apps-under-the-hood.pptx` and `code-apps-under-the-hood-ta
 
 Press **Ctrl+K** (or **Cmd+K** on Mac) anywhere in the app to open a global search dialog. Type to search across all records — accounts, contacts, action items, meeting summaries, ideas, and projects. Results are grouped by entity type with matching text highlighted in purple. Click a result to navigate to that entity's page. Press **Esc** to close. A "Ctrl+K to search" hint appears in the sidebar footer.
 
-## Copilot Studio Agent
+## Compass — In-App Agent
 
-A floating **blue chat button** appears in the bottom-right corner of every page. Click it to open the Copilot Studio agent in a popup window. The agent can query your Dataverse data — ask it questions about your accounts, contacts, action items, and more.
+A floating **purple-to-pink gradient circle** with a Compass icon sits in the bottom-right corner of every page. Click it to open **Compass** — the in-app Copilot Studio agent, subtitled *"Assisting you in navigating My Work."* Compass can query your Dataverse data — ask it questions about your accounts, contacts, action items, ideas, meeting summaries, and projects.
 
-- **Open:** Click the blue gradient circle (chat bubble icon) in the bottom-right — this opens a popup window with the agent
-- **Reopen / Focus:** Click the button again to focus the existing popup, or open a new one if you closed it
-- **Close:** Close the popup window directly
+- **Open / close:** Click the Compass button to toggle the chat panel (no popup window — the chat is embedded in the app)
+- **Send:** Type a message and press **Enter** (or click the send arrow). Sending is disabled until the agent responds — a "Thinking…" indicator appears while you wait
+- **Reset:** Once a conversation has started, a **Reset** link appears in the panel header. Click it to clear the thread and start a new conversation
+- **Close:** Click the **X** in the panel header, or click the floating button again
 
-The agent authenticates automatically in the popup — no sign-in needed.
+Compass authenticates with your Microsoft sign-in inherited from the Power Apps host — no token handling, no sign-in prompts, no popup window. The conversation ID threads automatically across turns.
 
 ## Ideas
 
