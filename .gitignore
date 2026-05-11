@@ -25,3 +25,8 @@ Thumbs.db
 
 # Python
 scripts/__pycache__/
+
+# Scratch / working material
+inbox/
+.playwright-mcp/
+inbox-dashboard-mockup.png

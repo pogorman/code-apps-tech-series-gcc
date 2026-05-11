@@ -26,7 +26,7 @@ export function PageHeader() {
             className="text-xl font-bold tracking-[-0.02em] leading-tight"
             style={{ color: "var(--dash-ink-1)" }}
           >
-            Action Items
+            Tasks
           </h1>
         </div>
       </div>

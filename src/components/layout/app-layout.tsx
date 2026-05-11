@@ -52,7 +52,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: "activity",
     items: [
-      { to: "/action-items", label: "Action Items", icon: ClipboardList, color: "#ef4444" },
+      { to: "/action-items", label: "Tasks", icon: ClipboardList, color: "#ef4444" },
     ],
   },
   {
